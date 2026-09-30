@@ -1,0 +1,40 @@
+{
+  "_note": "SYNTHETIC fixture built from SerpApi's documented schema. Replace with a recorded response via scripts/smoke_live.py --record.",
+  "search_metadata": {"id": "synthetic", "status": "Success", "google_flights_url": "https://www.google.com/travel/flights?hl=en&gl=in&curr=INR"},
+  "search_parameters": {"engine": "google_flights", "departure_id": "DEL", "arrival_id": "BOM", "outbound_date": "2026-10-16", "type": "2", "currency": "INR"},
+  "best_flights": [
+    {
+      "flights": [
+        {"departure_airport": {"name": "Indira Gandhi International Airport", "id": "DEL", "time": "2026-10-16 06:00"},
+         "arrival_airport": {"name": "Chhatrapati Shivaji Maharaj International Airport", "id": "BOM", "time": "2026-10-16 08:20"},
+         "duration": 140, "airplane": "Airbus A321neo", "airline": "IndiGo", "travel_class": "Economy", "flight_number": "6E 6218",
+         "legroom": "28 in", "extensions": ["Below average legroom (28 in)", "In-seat USB outlet"]}
+      ],
+      "total_duration": 140, "price": 5412, "type": "One way", "booking_token": "tok-6e6218"
+    },
+    {
+      "flights": [
+        {"departure_airport": {"name": "Indira Gandhi International Airport", "id": "DEL", "time": "2026-10-16 07:00"},
+         "arrival_airport": {"name": "Chhatrapati Shivaji Maharaj International Airport", "id": "BOM", "time": "2026-10-16 09:25"},
+         "duration": 145, "airplane": "Airbus A320neo", "airline": "Air India", "travel_class": "Economy", "flight_number": "AI 2429",
+         "extensions": ["Average legroom (29 in)"], "often_delayed_by_over_30_min": true}
+      ],
+      "total_duration": 145, "price": 6120, "type": "One way", "booking_token": "tok-ai2429"
+    }
+  ],
+  "other_flights": [
+    {
+      "flights": [
+        {"departure_airport": {"name": "Indira Gandhi International Airport", "id": "DEL", "time": "2026-10-16 21:10"},
+         "arrival_airport": {"name": "Rajiv Gandhi International Airport", "id": "HYD", "time": "2026-10-16 23:20"},
+         "duration": 130, "airline": "Akasa Air", "flight_number": "QP 1406", "airplane": "Boeing 737 MAX 8"},
+        {"departure_airport": {"name": "Rajiv Gandhi International Airport", "id": "HYD", "time": "2026-10-17 06:15"},
+         "arrival_airport": {"name": "Chhatrapati Shivaji Maharaj International Airport", "id": "BOM", "time": "2026-10-17 07:35"},
+         "duration": 80, "airline": "Akasa Air", "flight_number": "QP 1112", "airplane": "Boeing 737 MAX 8", "overnight": true}
+      ],
+      "layovers": [{"duration": 415, "name": "Rajiv Gandhi International Airport", "id": "HYD", "overnight": true}],
+      "total_duration": 625, "price": 4890, "type": "One way"
+    }
+  ],
+  "price_insights": {"lowest_price": 4890, "price_level": "typical", "typical_price_range": [4500, 7500]}
+}
