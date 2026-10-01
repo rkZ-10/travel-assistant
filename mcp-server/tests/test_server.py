@@ -116,3 +116,4 @@ async def test_search_policies_over_mcp(settings, store, tmp_path):
     top = r.structured_content["passages"][0]
     assert top["airline"] == "QP" and "15 kg" in top["text"]
     assert top["fetched_on"] == "2026-10-02" and top["url"].startswith("https://")
+    assert top["stale_warning"] is None or "days ago" in top["stale_warning"]

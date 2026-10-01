@@ -7,7 +7,7 @@ import sys
 from ..config import Settings
 from .index import FastEmbedder, PolicyIndex
 from .ingest import fetch_all, load_snapshot
-from .sources import load_sources
+from .sources import age_days, load_sources, staleness_warning
 
 
 def _index(settings: Settings) -> PolicyIndex:
@@ -49,10 +49,21 @@ def cmd_query(args: argparse.Namespace) -> int:
 
 
 def cmd_sources(_: argparse.Namespace) -> int:
+    stale = 0
     for s in load_sources():
         snap = load_snapshot(s)
-        when = snap.fetched_at[:10] if snap else "not fetched"
-        print(f"{s.id:<22} {s.airline:<5} {when:<12} {s.title}")
+        if snap:
+            when = f"{snap.fetched_at[:10]} ({age_days(snap.fetched_at)}d)"
+            warn = staleness_warning(s, snap.fetched_at)
+        else:
+            when, warn = "not fetched", None
+        flag = "STALE" if warn else ""
+        stale += bool(warn)
+        print(f"{s.id:<22} {s.airline:<5} {when:<20} {flag:<6} {s.title}")
+        if warn:
+            print(f"{'':<22} -> {warn}")
+    if stale:
+        print(f"\n{stale} source(s) older than the freshness limit.")
     return 0
 
 

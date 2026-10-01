@@ -38,7 +38,7 @@ from .providers.airlabs import AirLabsStatusProvider
 from .providers.base import CachedHTTP, FlightSearchProvider, FlightStatusProvider, ProviderError
 from .rag.index import FastEmbedder, PolicyIndex
 from .rag.ingest import load_snapshot
-from .rag.sources import load_sources
+from .rag.sources import age_days, load_sources, staleness_warning
 
 IST = timezone(timedelta(hours=5, minutes=30))
 _IATA = re.compile(r"^[A-Z]{3}$")
@@ -271,12 +271,17 @@ def build_server(services: Services | None = None) -> MCPServer:
             raise ToolError(msg)
         codes = [a.strip().upper() for a in airlines] if airlines else None
         hits = idx.search(query, codes, include_regulations, top_k)
+        by_id = {src.id: src for src in load_sources()}
         return PolicySearchResult(
             query=query,
             passages=[
                 PolicyPassage(
                     airline=h.airline, source=h.title, section=h.heading, text=h.text,
                     url=h.location, fetched_on=h.fetched_at[:10], note=h.note,
+                    stale_warning=(
+                        staleness_warning(by_id[h.source_id], h.fetched_at)
+                        if h.source_id in by_id else None
+                    ),
                 )
                 for h in hits
             ],
@@ -290,7 +295,10 @@ def build_server(services: Services | None = None) -> MCPServer:
             snap = load_snapshot(src)
             out.append(PolicySource(
                 id=src.id, airline=src.airline, title=src.title, url=src.location,
-                fetched_on=snap.fetched_at[:10] if snap else None, note=src.note,
+                fetched_on=snap.fetched_at[:10] if snap else None,
+                age_days=age_days(snap.fetched_at) if snap else None,
+                stale_warning=staleness_warning(src, snap.fetched_at) if snap else None,
+                note=src.note,
             ))
         return out
 

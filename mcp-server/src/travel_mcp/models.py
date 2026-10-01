@@ -119,6 +119,9 @@ class PolicyPassage(BaseModel):
     url: str
     fetched_on: str = Field(description="Date the page was captured; policies change, so cite this")
     note: str | None = Field(None, description="Caveat about this source (e.g. superseded)")
+    stale_warning: str | None = Field(
+        None, description="Set when the capture is old; mention it to the user alongside the answer"
+    )
 
 
 class PolicySearchResult(BaseModel):
@@ -136,4 +139,6 @@ class PolicySource(BaseModel):
     title: str
     url: str
     fetched_on: str | None
+    age_days: int | None = None
+    stale_warning: str | None = None
     note: str | None = None

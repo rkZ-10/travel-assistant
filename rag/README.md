@@ -20,3 +20,10 @@ uv run travel-rag sources             # what's indexed, and when it was fetched
 ```
 
 Snapshots aren't committed because they're copies of third-party pages. Run `ingest` to rebuild them.
+
+**Freshness and sanity checks**
+
+- Snapshots older than 60 days are marked `STALE` in `travel-rag sources`, and `search_policies`
+  attaches a `stale_warning` to their passages that says how to update them.
+- `ingest` rejects pages that look like a bot wall, CDN challenge or cookie-consent screen, or that
+  have almost no text. For a manually saved page, the error tells you which URL to save again.

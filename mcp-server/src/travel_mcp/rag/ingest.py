@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -17,6 +18,30 @@ UA = (
     "Chrome/128.0 Safari/537.36 travel-assistant-rag/0.1 (personal, non-commercial)"
 )
 MIN_TEXT = 300  # less than this after extraction usually means a JS-only shell or block page
+
+# Phrases from bot walls, CDN challenges and consent screens. Only checked near the top of the
+# page or on short pages, so a real policy page that mentions "captcha" in its footer still passes.
+_BLOCK_PHRASES = re.compile(
+    r"access denied|request (?:was )?blocked|you have been blocked|are you a (?:human|robot)|"
+    r"verify you are human|captcha|enable javascript|javascript is (?:disabled|required)|"
+    r"attention required|checking your browser|pardon our interruption|403 forbidden|"
+    r"too many requests|unusual traffic|we value your privacy|manage (?:cookie )?consent",
+    re.I,
+)
+
+
+def check_content(md: str) -> None:
+    """Raise if extracted text looks like a block page, consent wall or empty shell."""
+    if len(md) < MIN_TEXT:
+        raise ValueError(
+            f"only {len(md)} chars of text extracted — page may need JavaScript or blocked the request"
+        )
+    head = md[:800]
+    if (m := _BLOCK_PHRASES.search(head)) or (len(md) < 4000 and (m := _BLOCK_PHRASES.search(md))):
+        raise ValueError(f"looks like a block or consent page (found {m.group(0)!r}), not policy text")
+    has_structure = re.search(r"^#{1,6} ", md, re.M) or re.search(r"^\|", md, re.M)
+    if not has_structure and len(md) < 1500:
+        raise ValueError("no headings or tables and very little text — probably not the policy page")
 
 
 @dataclass
@@ -100,10 +125,12 @@ def fetch_source(
         raw, ctype, hint = resp.content, resp.headers.get("content-type", ""), source.url or ""
 
     md, title, ctype = _extract(raw, ctype, hint)
-    if len(md) < MIN_TEXT:
-        raise ValueError(
-            f"only {len(md)} chars of text extracted — page may need JavaScript or blocked the request"
-        )
+    try:
+        check_content(md)
+    except ValueError as exc:
+        if source.file and source.url:
+            raise ValueError(f"{exc}. Re-save {source.url} as rag/{source.file}") from None
+        raise
 
     snap_dir.mkdir(parents=True, exist_ok=True)
     ext = "pdf" if ctype == "application/pdf" else "html"

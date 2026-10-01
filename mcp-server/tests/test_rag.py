@@ -222,3 +222,55 @@ def test_extractor_upgrade_reextracts_without_refetch(tmp_path):
     assert report[0].status == "re-extracted"
     snap = load_snapshot(src, tmp_path)
     assert "4,299" in snap.markdown and snap.fetched_at == meta["fetched_at"]
+
+
+# ------------------------------------------------ block pages + staleness ----
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+from travel_mcp.rag.ingest import check_content  # noqa: E402
+from travel_mcp.rag.sources import staleness_warning  # noqa: E402
+
+LONG_POLICY = "# Baggage\n\n" + ("Checked baggage allowance is 15 kg on domestic flights. " * 90)
+
+
+@pytest.mark.parametrize("page", [
+    "# Access Denied\n\nYou don't have permission to access this server. Reference #18.af" + " x" * 200,
+    "Checking your browser before accessing goindigo.in. This process is automatic." + " ." * 200,
+    "We value your privacy. We use cookies to enhance your browsing experience..." + " ." * 200,
+    "Loading please wait " * 30,  # no headings/tables, short
+])
+def test_block_and_consent_pages_rejected(page):
+    with pytest.raises(ValueError):
+        check_content(page)
+
+
+def test_real_page_mentioning_captcha_in_footer_passes():
+    check_content(LONG_POLICY + "\n\nThis site is protected by reCAPTCHA.")
+
+
+def test_manual_save_block_page_says_how_to_fix(tmp_path):
+    from travel_mcp.rag.sources import Source
+
+    (tmp_path / "manual").mkdir()
+    (tmp_path / "manual" / "x.html").write_text(
+        "<html><body><main><h1>Access Denied</h1><p>Request blocked by security rules. "
+        + "Ref 123. " * 60 + "</p></main></body></html>"
+    )
+    saved = tmp_path / "manual" / "x.html"
+    src = Source(id="x", airline="6E", title="x", url="https://airline.test/x", file=str(saved))
+    with pytest.raises(ValueError, match=r"Re-save https://airline.test/x as rag/"):
+        fetch_source(src, tmp_path / "snaps")
+
+
+def test_staleness_warning_after_60_days():
+    from travel_mcp.rag.sources import Source
+
+    now = datetime(2026, 12, 15, tzinfo=timezone.utc)
+    manual = Source(id="m", airline="6E", title="m", url="https://a.test/p", file="manual/m.html")
+    fetched = Source(id="f", airline="QP", title="f", url="https://b.test/p")
+    fresh = (now - timedelta(days=59)).isoformat()
+    old = (now - timedelta(days=74)).isoformat()
+    assert staleness_warning(manual, fresh, now) is None
+    assert "74 days" in staleness_warning(manual, old, now)
+    assert "re-save https://a.test/p as rag/manual/m.html" in staleness_warning(manual, old, now)
+    assert "--refresh" in staleness_warning(fetched, old, now)

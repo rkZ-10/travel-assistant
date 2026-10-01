@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -19,6 +20,25 @@ AIRLINE_NAMES = {
     "SG": "SpiceJet",
     "DGCA": "DGCA (regulator)",
 }
+
+
+MAX_AGE_DAYS = 60  # airline policies change; older snapshots get a re-save/re-fetch warning
+
+
+def age_days(fetched_at: str, now: datetime | None = None) -> int:
+    now = now or datetime.now(timezone.utc)
+    return (now - datetime.fromisoformat(fetched_at)).days
+
+
+def staleness_warning(source: "Source", fetched_at: str, now: datetime | None = None) -> str | None:
+    days = age_days(fetched_at, now)
+    if days <= MAX_AGE_DAYS:
+        return None
+    if source.file and source.url:
+        action = f"re-save {source.url} as rag/{source.file}, then run `travel-rag ingest`"
+    else:
+        action = "run `travel-rag ingest --refresh`"
+    return f"Captured {days} days ago; the policy may have changed. To update: {action}."
 
 
 class Source(BaseModel):
