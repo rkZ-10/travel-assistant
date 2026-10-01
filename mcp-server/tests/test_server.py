@@ -22,8 +22,11 @@ async def test_tools_listed(settings, store):
     async with Client(srv) as c:
         tools = {t.name: t for t in (await c.list_tools()).tools}
     assert set(tools) == {
-        "search_flights", "get_flight_status", "get_route_departures", "get_api_usage"
+        "search_flights", "get_flight_status", "get_route_departures", "get_api_usage",
+        "search_policies", "list_policy_sources",
+        "get_travel_preferences", "update_travel_preferences",
     }
+    assert tools["update_travel_preferences"].annotations.read_only_hint is False
     assert tools["search_flights"].annotations.read_only_hint is True
 
 
@@ -72,3 +75,44 @@ async def test_missing_key_is_readable_error(settings, store, tmp_path):
         r = await c.call_tool("search_flights", {"origin": "DEL", "destination": "BOM", "date": future(3)})
     assert r.is_error
     assert "SERPAPI_KEY" in r.content[0].text
+
+
+async def test_preferences_roundtrip_over_mcp(settings, store, tmp_path):
+    from travel_mcp.preferences import PreferenceStore
+
+    srv = build_server(make_services(
+        settings, store, Recorder({}), Recorder({}), prefs=PreferenceStore(tmp_path)
+    ))
+    async with Client(srv) as c:
+        r = await c.call_tool("update_travel_preferences", {"changes": {"home_airport": "hyd", "seat": "aisle"}})
+        assert not r.is_error, r.content
+        assert r.structured_content["changed"]["home_airport"] == [None, "HYD"]
+        bad = await c.call_tool("update_travel_preferences", {"changes": {"home_airport": "Hyderabad"}})
+        assert bad.is_error
+        got = await c.call_tool("get_travel_preferences", {})
+    assert got.structured_content["home_airport"] == "HYD"
+    assert got.structured_content["seat"] == "aisle"
+
+
+async def test_search_policies_over_mcp(settings, store, tmp_path):
+    from travel_mcp.rag.index import PolicyIndex
+
+    from .rag_helpers import AKASA_MD, DGCA_MD, SOURCES, FakeEmbedder, write_snapshot
+
+    empty = PolicyIndex(":memory:", FakeEmbedder())
+    srv = build_server(make_services(settings, store, Recorder({}), Recorder({}), policies=empty))
+    async with Client(srv) as c:
+        r = await c.call_tool("search_policies", {"query": "baggage"})
+    assert r.is_error and "travel-rag ingest" in r.content[0].text
+
+    write_snapshot(tmp_path, SOURCES[1], AKASA_MD)
+    write_snapshot(tmp_path, SOURCES[2], DGCA_MD)
+    idx = PolicyIndex(":memory:", FakeEmbedder())
+    idx.rebuild(SOURCES, tmp_path)
+    srv = build_server(make_services(settings, store, Recorder({}), Recorder({}), policies=idx))
+    async with Client(srv) as c:
+        r = await c.call_tool("search_policies", {"query": "checked baggage allowance", "airlines": ["qp"]})
+    assert not r.is_error
+    top = r.structured_content["passages"][0]
+    assert top["airline"] == "QP" and "15 kg" in top["text"]
+    assert top["fetched_on"] == "2026-10-02" and top["url"].startswith("https://")

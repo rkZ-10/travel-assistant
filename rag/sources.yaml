@@ -1,0 +1,77 @@
+# Policy sources for search_policies. Official pages only.
+# Each entry: id, airline (IATA code, or DGCA for regulations), title, and url OR file.
+# `file:` paths are relative to this folder — use rag/manual/ for PDFs you download yourself.
+# `note:` is shown alongside every result from that source.
+# After editing:  uv run travel-rag ingest
+
+sources:
+  - id: indigo-baggage
+    airline: 6E
+    title: IndiGo — Baggage allowance
+    url: https://www.goindigo.in/travel-information/en/baggage-allowance.html
+    topics: [baggage]
+
+  - id: indigo-fees
+    airline: 6E
+    title: IndiGo — Fees and charges
+    url: https://www.goindigo.in/information/fees-and-charges.html
+    topics: [cancellation, change, fees, baggage]
+
+  - id: indigo-fare-rules
+    airline: 6E
+    title: IndiGo — Fare rules
+    url: https://www.goindigo.in/travel-information/en/fare-rules.html
+    topics: [fares, cancellation, change]
+
+  - id: indigo-disruptions
+    airline: 6E
+    title: IndiGo — Flight delays and cancellations
+    url: https://www.goindigo.in/travel-information/en/flight-delays-cancellations.html
+    topics: [delay, cancellation, refund]
+
+  - id: airindia-smart-fares
+    airline: AI
+    title: Air India — Smart Fares (fare families)
+    url: https://www.airindia.com/in/en/book/smart-fares.html
+    topics: [fares, baggage, cancellation, change]
+
+  - id: airindia-baggage-faq
+    airline: AI
+    title: Air India — Baggage FAQ
+    url: https://www.airindia.com/in/en/frequently-asked-questions/baggage.html
+    topics: [baggage]
+    note: Air India publishes exact allowances per booking via its baggage calculator; this page has general rules only.
+
+  - id: akasa-baggage
+    airline: QP
+    title: Akasa Air — Baggage
+    url: https://www.akasaair.com/information/baggage
+    topics: [baggage]
+
+  - id: akasa-faq
+    airline: QP
+    title: Akasa Air — Customer support FAQ
+    url: https://www.akasaair.com/customer-support/faq
+    topics: [cancellation, change, refund, baggage]
+
+  - id: dgca-car-m4
+    airline: DGCA
+    title: DGCA CAR Section 3 Series M Part IV — Denied boarding, cancellations and delays (Rev 4, Jan 2023)
+    url: https://www.dgca.gov.in/digigov-portal/Upload?flag=iframeAttachView&attachId=we1PSlOuQhYdHcwKKrm7ew%3D%3D
+    topics: [compensation, delay, cancellation, denied-boarding]
+
+  - id: dgca-car-m2-2019
+    airline: DGCA
+    title: DGCA CAR Section 3 Series M Part II — Refund of airline tickets (2019 revision)
+    url: https://www.dgca.gov.in/digigov-portal/Upload?flag=iframeAttachView&attachId=NEYrfyUarqXt9W7QigEe3Q%3D%3D&baseLocale=en_US
+    topics: [refund, cancellation]
+    note: >-
+      Superseded — DGCA revised this CAR on 24 Feb 2026 (effective 26 Mar 2026). Verify against
+      the current version before relying on it. If you download the 2026 PDF from dgca.gov.in,
+      save it as rag/manual/dgca-car-m2-2026.pdf and uncomment the entry below.
+
+  # - id: dgca-car-m2-2026
+  #   airline: DGCA
+  #   title: DGCA CAR Section 3 Series M Part II — Refund of airline tickets (Feb 2026)
+  #   file: manual/dgca-car-m2-2026.pdf
+  #   topics: [refund, cancellation]

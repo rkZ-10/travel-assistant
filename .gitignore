@@ -30,3 +30,6 @@ Thumbs.db
 
 # Local cache / quota DB
 .data/
+
+# RAG snapshots (re-created by `travel-rag ingest`)
+rag/snapshots/

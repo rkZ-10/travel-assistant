@@ -1,7 +1,8 @@
 # travel-mcp
 
-MCP server for the Travel Assistant: flight **search** with live fares for Indian routes, plus
-**day-of-travel status**. It uses the Python MCP SDK v2 (`MCPServer`) over stdio.
+MCP server for the Travel Assistant: flight **search** with live fares for Indian routes,
+**day-of-travel status**, **airline policy RAG**, and saved **travel preferences**. It uses the
+Python MCP SDK v2 (`MCPServer`) over stdio.
 
 | Tool | Source | Use it for |
 |---|---|---|
@@ -9,6 +10,10 @@ MCP server for the Travel Assistant: flight **search** with live fares for India
 | `get_flight_status` | AirLabs | Delay, gate and terminal for a flight in the next ~12 h. Codeshare numbers resolve to the operating flight |
 | `get_route_departures` | AirLabs | What's leaving on a route in the next ~12 h, one row per operating flight |
 | `get_api_usage` | local | Calls used this month vs. budget |
+| `search_policies` | local index (RAG) | Baggage, fare types, change and cancellation fees, refunds, DGCA compensation. Returns cited passages with fetch dates |
+| `list_policy_sources` | local | What's indexed and when each source was fetched |
+| `get_travel_preferences` | local | Saved defaults: home airport, airlines, stops, departure window, seat, budget… |
+| `update_travel_preferences` | local | Change them (partial update, `clear` to reset). Every change is logged |
 
 ## Design notes
 
@@ -22,6 +27,31 @@ MCP server for the Travel Assistant: flight **search** with live fares for India
 - **Validation before spending quota.** IATA codes, dates (IST, not in the past, return ≥ outbound),
   and airline codes are checked before any API call. Failures come back as readable tool errors.
 - **Compact outputs** (`models.py`). Tool results go into an LLM's context, so they're trimmed and typed.
+
+## Policy RAG
+
+Sources are listed in [`../rag/sources.yaml`](../rag/sources.yaml) (official airline pages + DGCA CARs).
+
+- **Ingest** (`travel-rag ingest`): fetch each source → save a dated snapshot in `rag/snapshots/` →
+  extract to markdown, keeping fee **tables** as rows → split into chunks by heading, each keeping its
+  heading path (`Fees and Charges > Domestic… > Saver fare`).
+- **Index** (`.data/policies.sqlite3`): SQLite FTS5 for exact terms ("Flexi Plus", "4,299") plus
+  local `bge-small-en-v1.5` embeddings (fastembed/ONNX, no API key) for paraphrases, fused with
+  Reciprocal Rank Fusion. Each chunk is embedded with a contextual header (airline, page, section).
+- **Answering**: passages carry source, URL, `fetched_on` and caveats (e.g. "superseded"), and the
+  server tells the model to answer only from them. Airline filters always keep DGCA rules unless
+  `include_regulations=false`.
+
+```powershell
+uv run travel-rag ingest          # first run also downloads the embedding model (~70 MB) into .data/models
+uv run travel-rag query "IndiGo Saver cancellation fee 2 days before" --airline 6E
+```
+
+## Preferences
+
+Stored in `.data/preferences.json` (gitignored, human-editable), with a change log in
+`.data/preferences_history.jsonl`. The model reads them at the start of a trip request and saves
+lasting ones when you say things like "always nonstop" or "stop suggesting SpiceJet".
 
 ## Setup (Windows)
 

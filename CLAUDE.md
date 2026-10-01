@@ -12,11 +12,12 @@ Portfolio project demonstrating MCP server design, RAG and agent orchestration.
 - Day-of-travel status: AirLabs `schedules` (rolling ~12h window only) — free plan 1,000/month, expires 2026-10-30
 - On-demand only, no background polling
 - Booking: deferred. Duffel doesn't onboard India-incorporated accounts; plan is a sandbox BookingProvider
-- RAG: fare rules, baggage/cancellation policies (IndiGo, Air India), DGCA passenger rules
+- RAG: rag/sources.yaml -> `travel-rag ingest` -> rag/snapshots (gitignored) -> .data/policies.sqlite3 (FTS5 + fastembed bge-small, RRF)
+- Preferences: .data/preferences.json via get/update_travel_preferences (personal use only, no company policy)
 
 ## Structure
 mcp-server/   MCP server package (src/travel_mcp): tools, providers, SQLite cache/quota
-rag/          ingestion, chunking, vector store
+rag/          sources.yaml + manual/ PDFs (code lives in mcp-server/src/travel_mcp/rag)
 agent/        orchestration, approval step before booking
 evals/        booking-flow scenarios, RAG accuracy
 

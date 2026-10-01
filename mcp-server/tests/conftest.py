@@ -43,7 +43,9 @@ def store() -> Store:
     return Store(":memory:")
 
 
-def make_services(settings: Settings, store: Store, serp: Recorder, air: Recorder) -> Services:
+def make_services(
+    settings: Settings, store: Store, serp: Recorder, air: Recorder, prefs=None, policies=None
+) -> Services:
     serp_http = CachedHTTP(
         "serpapi", "https://serpapi.com", store, settings.serpapi_monthly_budget,
         settings.budget_stop_ratio, httpx.AsyncClient(transport=httpx.MockTransport(serp)),
@@ -57,4 +59,6 @@ def make_services(settings: Settings, store: Store, serp: Recorder, air: Recorde
         store=store,
         search=GoogleFlightsProvider(settings.serpapi_key, serp_http, settings.search_ttl),
         status=AirLabsStatusProvider(settings.airlabs_key, air_http, settings.status_ttl),
+        prefs=prefs,
+        policies=policies,
     )

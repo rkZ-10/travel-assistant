@@ -108,3 +108,32 @@ class QuotaReport(BaseModel):
     monthly_budget: int
     safety_stop_at: int
     configured: bool
+
+
+# --------------------------------------------------------------- policies ----
+class PolicyPassage(BaseModel):
+    airline: str = Field(description="IATA code, or DGCA for regulations")
+    source: str = Field(description="Source page title")
+    section: str = Field(description="Heading path within the page")
+    text: str
+    url: str
+    fetched_on: str = Field(description="Date the page was captured; policies change, so cite this")
+    note: str | None = Field(None, description="Caveat about this source (e.g. superseded)")
+
+
+class PolicySearchResult(BaseModel):
+    query: str
+    passages: list[PolicyPassage]
+    guidance: str = (
+        "Answer only from these passages and cite source + fetched_on. If they don't cover the "
+        "question, say so and point to the source URL rather than guessing."
+    )
+
+
+class PolicySource(BaseModel):
+    id: str
+    airline: str
+    title: str
+    url: str
+    fetched_on: str | None
+    note: str | None = None

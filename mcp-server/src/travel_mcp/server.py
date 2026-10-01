@@ -5,6 +5,9 @@ Tools
   get_flight_status     live status of one flight, today (AirLabs)
   get_route_departures  what's leaving on a route in the next ~12 h (AirLabs)
   get_api_usage         monthly quota used per provider
+  search_policies       baggage / fare-rule / refund / DGCA passages, with citations (RAG)
+  list_policy_sources   what's indexed and when it was fetched
+  get_travel_preferences / update_travel_preferences   your saved defaults
 """
 from __future__ import annotations
 
@@ -20,9 +23,22 @@ from pydantic import Field
 
 from .cache import QuotaExceeded, Store
 from .config import Settings
-from .models import QuotaReport, SearchResult, SortBy, StatusResult, TravelClass
+from .models import (
+    PolicyPassage,
+    PolicySearchResult,
+    PolicySource,
+    QuotaReport,
+    SearchResult,
+    SortBy,
+    StatusResult,
+    TravelClass,
+)
+from .preferences import PreferenceStore, Preferences, PreferencesUpdate, PreferencesUpdateResult
 from .providers.airlabs import AirLabsStatusProvider
 from .providers.base import CachedHTTP, FlightSearchProvider, FlightStatusProvider, ProviderError
+from .rag.index import FastEmbedder, PolicyIndex
+from .rag.ingest import load_snapshot
+from .rag.sources import load_sources
 
 IST = timezone(timedelta(hours=5, minutes=30))
 _IATA = re.compile(r"^[A-Z]{3}$")
@@ -37,6 +53,8 @@ class Services:
     store: Store
     search: FlightSearchProvider
     status: FlightStatusProvider
+    prefs: PreferenceStore | None = None
+    policies: "PolicyIndex | None" = None
 
 
 def build_services(settings: Settings | None = None) -> Services:
@@ -57,6 +75,10 @@ def build_services(settings: Settings | None = None) -> Services:
             s.serpapi_key, serp_http, s.search_ttl, s.currency, s.country, s.language
         ),
         status=AirLabsStatusProvider(s.airlabs_key, air_http, s.status_ttl),
+        prefs=PreferenceStore(s.data_dir),
+        policies=PolicyIndex(
+            s.data_dir / "policies.sqlite3", FastEmbedder(cache_dir=s.data_dir / "models")
+        ),
     )
 
 
@@ -91,10 +113,16 @@ def build_server(services: Services | None = None) -> MCPServer:
         name="travel-assistant",
         version="0.1.0",
         instructions=(
-            "Flight tools for an Indian travel assistant. Use search_flights for fares on a "
-            "future date. Use get_flight_status / get_route_departures only for flights in "
-            "the next ~12 hours. Prices are in INR. Times are local airport time. "
-            "APIs are on small monthly quotas: avoid repeating identical searches."
+            "Flight tools for an Indian travel assistant. At the start of a trip request, call "
+            "get_travel_preferences and apply them (home airport as default origin, airlines, "
+            "stops, departure window, budget); say which preferences you applied. When the user "
+            "states a lasting preference ('I always fly aisle', 'stop suggesting SpiceJet'), "
+            "save it with update_travel_preferences; if it may be a one-off for this trip, ask "
+            "first. Use search_flights for fares on a future date. Use get_flight_status / "
+            "get_route_departures only for flights in the next ~12 hours. For baggage, fare "
+            "rules, cancellation fees, refunds or compensation, use search_policies and answer "
+            "only from its passages, citing source and fetched_on. Prices are in INR; times are "
+            "local airport time. APIs are on small monthly quotas: avoid repeating searches."
         ),
     )
 
@@ -190,6 +218,81 @@ def build_server(services: Services | None = None) -> MCPServer:
             )
             for name, budget, configured in rows
         ]
+
+    # ----------------------------------------------------- preferences ----
+    @mcp.tool(annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False))
+    def get_travel_preferences() -> Preferences:
+        """The user's saved travel preferences. Unset fields mean no preference."""
+        if not svc.prefs:
+            raise ToolError("preferences store not configured")
+        return svc.prefs.load()
+
+    @mcp.tool(
+        annotations=ToolAnnotations(
+            read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False
+        )
+    )
+    def update_travel_preferences(changes: PreferencesUpdate) -> PreferencesUpdateResult:
+        """Save lasting preferences. Only include fields that change; lists replace the old
+        value (send the full new list). Use `clear` to reset fields to no preference.
+        Returns the updated preferences and a field-by-field [old, new] diff."""
+        if not svc.prefs:
+            raise ToolError("preferences store not configured")
+        try:
+            prefs, diff = svc.prefs.update(changes)
+        except ValueError as exc:
+            raise ToolError(str(exc)) from exc
+        return PreferencesUpdateResult(
+            preferences=prefs,
+            changed=diff,
+            message="no changes" if not diff else f"updated {', '.join(sorted(diff))}",
+        )
+
+    # -------------------------------------------------------- policies ----
+    @mcp.tool(annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False))
+    def search_policies(
+        query: Annotated[str, Field(description="Natural-language question, e.g. 'IndiGo Saver cancellation fee 2 days before'")],
+        airlines: Annotated[
+            list[str] | None, Field(description="Limit to these airline IATA codes, e.g. ['6E']")
+        ] = None,
+        include_regulations: Annotated[
+            bool, Field(description="Also include DGCA passenger-rights rules")
+        ] = True,
+        top_k: Annotated[int, Field(ge=1, le=10)] = 5,
+    ) -> PolicySearchResult:
+        """Search official airline policy pages and DGCA rules (baggage, fare types, change and
+        cancellation fees, refunds, delay/denied-boarding compensation). Returns cited passages."""
+        idx = svc.policies
+        if idx is None or idx.count() == 0:
+            raise ToolError(
+                "Policy index is empty. Run `uv run travel-rag ingest` in mcp-server/ first."
+            )
+        if (msg := idx.model_mismatch()):
+            raise ToolError(msg)
+        codes = [a.strip().upper() for a in airlines] if airlines else None
+        hits = idx.search(query, codes, include_regulations, top_k)
+        return PolicySearchResult(
+            query=query,
+            passages=[
+                PolicyPassage(
+                    airline=h.airline, source=h.title, section=h.heading, text=h.text,
+                    url=h.location, fetched_on=h.fetched_at[:10], note=h.note,
+                )
+                for h in hits
+            ],
+        )
+
+    @mcp.tool(annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False))
+    def list_policy_sources() -> list[PolicySource]:
+        """Which policy sources are configured, and when each was last fetched."""
+        out = []
+        for src in load_sources():
+            snap = load_snapshot(src)
+            out.append(PolicySource(
+                id=src.id, airline=src.airline, title=src.title, url=src.location,
+                fetched_on=snap.fetched_at[:10] if snap else None, note=src.note,
+            ))
+        return out
 
     return mcp
 

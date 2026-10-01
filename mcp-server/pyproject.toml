@@ -1,7 +1,7 @@
 [project]
 name = "travel-mcp"
 version = "0.1.0"
-description = "MCP server for Indian domestic flight search (Google Flights via SerpApi) and flight status (AirLabs)"
+description = "MCP server for Indian domestic flight search, day-of-travel status, airline policy RAG and travel preferences"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -9,6 +9,11 @@ dependencies = [
     "httpx>=0.28",
     "pydantic>=2.10",
     "python-dotenv>=1.0",
+    "beautifulsoup4>=4.12",
+    "pdfplumber>=0.11",
+    "fastembed>=0.8",
+    "numpy>=1.26",
+    "pyyaml>=6",
 ]
 
 [project.optional-dependencies]
@@ -16,6 +21,7 @@ dev = ["pytest>=8", "pytest-asyncio>=0.24"]
 
 [project.scripts]
 travel-mcp = "travel_mcp.server:main"
+travel-rag = "travel_mcp.rag.cli:main"
 
 [build-system]
 requires = ["hatchling"]
