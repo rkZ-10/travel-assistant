@@ -31,9 +31,10 @@ class Source(BaseModel):
     note: str | None = None
 
     @model_validator(mode="after")
-    def _one_location(self) -> "Source":
-        if bool(self.url) == bool(self.file):
-            raise ValueError(f"source {self.id!r}: set exactly one of url or file")
+    def _has_location(self) -> "Source":
+        # url only: fetched over HTTP. file only: read from disk. Both: read the saved copy, cite the url.
+        if not (self.url or self.file):
+            raise ValueError(f"source {self.id!r}: set url, file, or both")
         self.airline = self.airline.upper()
         return self
 

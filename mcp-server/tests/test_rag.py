@@ -1,3 +1,5 @@
+import os
+
 import httpx
 import pytest
 
@@ -80,9 +82,35 @@ def test_sources_yaml_is_valid():
     assert all(s.url or s.file for s in sources)
 
 
-def test_source_needs_exactly_one_location():
+def test_source_needs_a_location():
     with pytest.raises(ValueError):
         Source(id="x", airline="6E", title="x")
+
+
+def test_saved_copy_is_read_from_disk_and_cites_url(tmp_path):
+    page = tmp_path / "page.html"
+    page.write_bytes(HTML.encode())
+    src = Source(id="saved", airline="6E", title="x", url="https://example.com/fees", file=str(page))
+    snap = fetch_source(src, tmp_path / "snaps", _client(b"", status=500))  # client must not be used
+    assert "Saver" in snap.markdown and src.location == "https://example.com/fees"
+
+
+def test_fetch_all_rereads_newer_saved_copy(tmp_path):
+    page = tmp_path / "page.html"
+    page.write_bytes(HTML.encode())
+    src = Source(id="saved", airline="6E", title="x", url="https://example.com/fees", file=str(page))
+    snaps = tmp_path / "snaps"
+    assert fetch_all([src], snaps)[0].status == "fetched"
+    assert fetch_all([src], snaps)[0].status == "cached"
+    later = page.stat().st_mtime + 60
+    os.utime(page, (later, later))
+    assert fetch_all([src], snaps)[0].status == "fetched"
+
+
+def test_missing_saved_copy_says_where_to_save_it(tmp_path):
+    src = Source(id="saved", airline="6E", title="x", url="https://example.com/fees", file="manual/nope.html")
+    report = fetch_all([src], tmp_path)[0]
+    assert report.status == "failed" and "https://example.com/fees" in report.detail
 
 
 # ------------------------------------------------------------------ index ----
@@ -126,3 +154,71 @@ def test_airline_filter_keeps_regulator(index):
 def test_model_mismatch_detected(index):
     index.embedder.model_name = "other-model"
     assert "re-run ingest" in index.model_mismatch()
+
+
+# ------------------------------------------- structure from tabs/accordions ----
+AEM_STYLE = """<html><head><title>Fees</title></head><body><main>
+<h1>Fees and Charges</h1>
+<div class="cmp-tabs">
+  <div class="cmp-tabs__tablist">
+    <button role="tab" id="t-dom">Domestic</button><button role="tab" id="t-intl">International</button>
+  </div>
+  <div role="tabpanel" aria-labelledby="t-dom">
+    <div class="accordion-item">
+      <div class="accordion-item--header"><p class="accordion-item--header-title">Changes and Cancellation</p></div>
+      <div class="accordion-item--body">
+        <p><b>IV. Changes and cancellation</b></p>
+        <h4>Rates for Saver fare.</h4>
+        <table><tr><td>Saver</td><td>Cancellation Fee</td></tr><tr><td>72h+</td><td>4299</td></tr></table>
+      </div>
+    </div>
+  </div>
+  <div role="tabpanel" aria-labelledby="t-intl" aria-hidden="true">
+    <div class="accordion-item">
+      <div class="accordion-item--header"><p class="accordion-item--header-title">Changes and Cancellation</p></div>
+      <div class="accordion-item--body">
+        <h4>Rates for Saver fare.</h4>
+        <table><tr><td>Saver</td><td>Cancellation Fee</td></tr><tr><td>72h+</td><td>4299</td></tr></table>
+      </div>
+    </div>
+  </div>
+  <div role="tabpanel" data-cmp-data-layer='{"x":{"dc:title":"Codeshare"}}'>
+    <p><b>Booking Fee</b></p><p>A booking fee of INR 350 applies to every booking made via the call centre.</p>
+  </div>
+</div></main></body></html>"""
+
+
+def test_tabs_and_accordions_become_heading_path():
+    md, _ = html_to_markdown(AEM_STYLE)
+    paths = [c.heading for c in chunk_markdown(md) if "4299" in c.text]
+    assert paths == [
+        "Fees and Charges > Domestic > Changes and Cancellation > Rates for Saver fare.",
+        "Fees and Charges > International > Changes and Cancellation > Rates for Saver fare.",
+    ], "identical tables under different tabs must both survive, each with its own tab label"
+    codeshare = next(c for c in chunk_markdown(md) if "INR 350" in c.text)
+    assert codeshare.heading == "Fees and Charges > Codeshare > Booking Fee"
+
+
+def test_overlong_heading_kept_as_text():
+    para = "A codeshare flight is one in which one carrier markets and the other operates " * 3
+    html = f"<main><h1>Fees</h1><div class='accordion-item--header'>{para}</div><p>Body text here for this section.</p></main>"
+    md, _ = html_to_markdown(html)
+    assert all(len(line) < 200 for line in md.splitlines() if line.startswith("#"))
+    assert "codeshare flight" in md
+
+
+def test_extractor_upgrade_reextracts_without_refetch(tmp_path):
+    import json
+
+    src = SOURCES[0]
+    fetch_source(src, tmp_path, _client(HTML.encode()))
+    meta_p = tmp_path / f"{src.id}.meta.json"
+    meta = json.loads(meta_p.read_text())
+    meta["extractor_version"] = 1
+    meta_p.write_text(json.dumps(meta))
+    (tmp_path / f"{src.id}.md").write_text("stale output")
+    failing = _client(b"", status=500)  # proves no network is used
+    report = fetch_all([src], tmp_path, client=failing)
+    assert report[0].status == "re-extracted"
+    snap = load_snapshot(src, tmp_path)
+    assert "4,299" in snap.markdown and snap.fetched_at == meta["fetched_at"]

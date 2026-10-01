@@ -9,7 +9,7 @@ from pathlib import Path
 
 import httpx
 
-from .extract import html_to_markdown, pdf_to_markdown
+from .extract import EXTRACTOR_VERSION, html_to_markdown, pdf_to_markdown
 from .sources import SNAPSHOT_DIR, Source
 
 UA = (
@@ -26,12 +26,13 @@ class Snapshot:
     markdown: str
     page_title: str | None
     content_type: str
+    extractor_version: int = 1
 
 
 @dataclass
 class FetchReport:
     source_id: str
-    status: str  # fetched | cached | failed
+    status: str  # fetched | cached | re-extracted | failed
     detail: str = ""
 
 
@@ -47,7 +48,23 @@ def load_snapshot(source: Source, snap_dir: Path = SNAPSHOT_DIR) -> Snapshot | N
     return Snapshot(
         source.id, meta["fetched_at"], md_p.read_text(encoding="utf-8"),
         meta.get("page_title"), meta.get("content_type", ""),
+        meta.get("extractor_version", 1),
     )
+
+
+def reextract_snapshot(source: Source, snap_dir: Path = SNAPSHOT_DIR) -> Snapshot | None:
+    """Re-run extraction on the saved raw page (after an extractor upgrade). Keeps fetched_at:
+    the content is as old as when it was captured, not when we re-parsed it."""
+    meta_p = _meta_path(snap_dir, source.id)
+    raw_p = next((p for p in (snap_dir / f"{source.id}.html", snap_dir / f"{source.id}.pdf") if p.exists()), None)
+    if not (meta_p.exists() and raw_p):
+        return None
+    meta = json.loads(meta_p.read_text(encoding="utf-8"))
+    md, title, ctype = _extract(raw_p.read_bytes(), meta.get("content_type", ""), str(raw_p))
+    (snap_dir / f"{source.id}.md").write_text(md, encoding="utf-8")
+    meta.update(page_title=title or meta.get("page_title"), chars=len(md), extractor_version=EXTRACTOR_VERSION)
+    meta_p.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    return Snapshot(source.id, meta["fetched_at"], md, meta.get("page_title"), ctype, EXTRACTOR_VERSION)
 
 
 def _extract(raw: bytes, content_type: str, hint: str) -> tuple[str, str | None, str]:
@@ -66,6 +83,9 @@ def fetch_source(
 ) -> Snapshot:
     if source.file:
         path = source.file_path()
+        if not path.exists():
+            where = f"open {source.url} in a browser and save it as" if source.url else "add"
+            raise FileNotFoundError(f"{where} rag/{source.file}")
         raw, ctype = path.read_bytes(), ""
         hint = str(path)
     else:
@@ -89,7 +109,9 @@ def fetch_source(
     ext = "pdf" if ctype == "application/pdf" else "html"
     (snap_dir / f"{source.id}.{ext}").write_bytes(raw)
     (snap_dir / f"{source.id}.md").write_text(md, encoding="utf-8")
-    fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # A saved copy is as fresh as the day it was saved, not the day it was ingested.
+    when = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc) if source.file else datetime.now(timezone.utc)
+    fetched_at = when.isoformat(timespec="seconds")
     _meta_path(snap_dir, source.id).write_text(
         json.dumps(
             {
@@ -100,12 +122,13 @@ def fetch_source(
                 "page_title": title,
                 "sha256": hashlib.sha256(raw).hexdigest(),
                 "chars": len(md),
+                "extractor_version": EXTRACTOR_VERSION,
             },
             indent=2,
         ),
         encoding="utf-8",
     )
-    return Snapshot(source.id, fetched_at, md, title, ctype)
+    return Snapshot(source.id, fetched_at, md, title, ctype, EXTRACTOR_VERSION)
 
 
 def fetch_all(
@@ -119,8 +142,21 @@ def fetch_all(
     cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
     for s in sources:
         existing = load_snapshot(s, snap_dir)
-        if existing and not refresh and datetime.fromisoformat(existing.fetched_at) > cutoff:
-            reports.append(FetchReport(s.id, "cached", existing.fetched_at[:10]))
+        reextracted = False
+        if existing and existing.extractor_version != EXTRACTOR_VERSION:
+            existing = reextract_snapshot(s, snap_dir) or existing
+            reextracted = existing.extractor_version == EXTRACTOR_VERSION
+        if not existing:
+            stale = True
+        elif s.file:  # local files are cheap to read: re-read whenever a newer copy has been saved
+            path = s.file_path()
+            saved = datetime.fromisoformat(existing.fetched_at).timestamp()
+            stale = not path.exists() or int(path.stat().st_mtime) > saved  # fetched_at is whole seconds
+        else:
+            stale = datetime.fromisoformat(existing.fetched_at) <= cutoff
+        if not refresh and not stale:
+            status = "re-extracted" if reextracted else "cached"
+            reports.append(FetchReport(s.id, status, existing.fetched_at[:10]))
             continue
         try:
             snap = fetch_source(s, snap_dir, client)

@@ -24,7 +24,7 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     print(f"Fetching {len(sources)} source(s)...")
     failed = 0
     for r in fetch_all(sources, refresh=args.refresh):
-        mark = {"fetched": "+", "cached": "=", "failed": "!"}[r.status]
+        mark = {"fetched": "+", "cached": "=", "re-extracted": "~", "failed": "!"}[r.status]
         failed += r.status == "failed"
         print(f"  {mark} {r.source_id:<22} {r.status:<8} {r.detail}")
     print("Building index (first run downloads the embedding model, ~70 MB)...")

@@ -1,6 +1,8 @@
 # Policy sources for search_policies. Official pages only.
-# Each entry: id, airline (IATA code, or DGCA for regulations), title, and url OR file.
-# `file:` paths are relative to this folder — use rag/manual/ for PDFs you download yourself.
+# Each entry: id, airline (IATA code, or DGCA for regulations), title, and url, file, or both.
+# `file:` paths are relative to this folder — use rag/manual/ for pages and PDFs you save yourself.
+# With both url and file, the saved file is indexed and the url is cited. IndiGo and Air India
+# don't answer non-browser clients, so save those pages from a browser (Ctrl+S, "Webpage, HTML only").
 # `note:` is shown alongside every result from that source.
 # After editing:  uv run travel-rag ingest
 
@@ -9,36 +11,42 @@ sources:
     airline: 6E
     title: IndiGo — Baggage allowance
     url: https://www.goindigo.in/travel-information/en/baggage-allowance.html
+    file: manual/indigo-baggage.html
     topics: [baggage]
 
   - id: indigo-fees
     airline: 6E
     title: IndiGo — Fees and charges
     url: https://www.goindigo.in/information/fees-and-charges.html
+    file: manual/indigo-fees.html
     topics: [cancellation, change, fees, baggage]
 
   - id: indigo-fare-rules
     airline: 6E
     title: IndiGo — Fare rules
     url: https://www.goindigo.in/travel-information/en/fare-rules.html
+    file: manual/indigo-fare-rules.html
     topics: [fares, cancellation, change]
 
   - id: indigo-disruptions
     airline: 6E
     title: IndiGo — Flight delays and cancellations
     url: https://www.goindigo.in/travel-information/en/flight-delays-cancellations.html
+    file: manual/indigo-disruptions.html
     topics: [delay, cancellation, refund]
 
   - id: airindia-smart-fares
     airline: AI
     title: Air India — Smart Fares (fare families)
     url: https://www.airindia.com/in/en/book/smart-fares.html
+    file: manual/airindia-smart-fares.html
     topics: [fares, baggage, cancellation, change]
 
   - id: airindia-baggage-faq
     airline: AI
     title: Air India — Baggage FAQ
     url: https://www.airindia.com/in/en/frequently-asked-questions/baggage.html
+    file: manual/airindia-baggage-faq.html
     topics: [baggage]
     note: Air India publishes exact allowances per booking via its baggage calculator; this page has general rules only.
 

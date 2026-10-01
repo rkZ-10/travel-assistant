@@ -33,3 +33,6 @@ Thumbs.db
 
 # RAG snapshots (re-created by `travel-rag ingest`)
 rag/snapshots/
+# Pages and PDFs saved by hand (third-party copies, like snapshots)
+rag/manual/*
+!rag/manual/.gitkeep
