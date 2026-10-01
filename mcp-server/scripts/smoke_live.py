@@ -22,11 +22,16 @@ from travel_mcp.server import IST
 
 FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures"
 SECRET_KEYS = {"api_key", "key"}
+DROP_KEYS = {"client", "pid", "server"}  # AirLabs echoes your IP + geolocation here
 
 
 def scrub(obj):
     if isinstance(obj, dict):
-        return {k: ("<redacted>" if k in SECRET_KEYS else scrub(v)) for k, v in obj.items()}
+        return {
+            k: ("<redacted>" if k in SECRET_KEYS else scrub(v))
+            for k, v in obj.items()
+            if k not in DROP_KEYS
+        }
     if isinstance(obj, list):
         return [scrub(v) for v in obj]
     return obj
