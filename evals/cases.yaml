@@ -161,8 +161,8 @@ cases:
       cites_policy_date: true
 
   - id: policy-conflicting-sources-look-in
-    tags: [rag, conflict, known-gap]
-    why: "Found in manual testing: the superseded 2019 DGCA rule (5 days) contradicts IndiGo's current page (7 days). The agent should follow the current airline page, or flag the conflict"
+    tags: [rag, conflict]
+    why: "Found in manual testing: the superseded 2019 DGCA rule (5 days) contradicts IndiGo's current page (7 days). The agent must follow the current airline page and flag the conflict (passing since the 2026-10-03 baseline)"
     prompt: "If I book an IndiGo flight directly on their website today for a flight 6 days from now, can I cancel it for free within 48 hours?"
     checks:
       tools_include: [search_policies]

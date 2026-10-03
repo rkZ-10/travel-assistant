@@ -8,7 +8,7 @@ import sys
 from ..config import AgentConfig
 from .cases import load_cases
 from .report import markdown, write
-from .runner import run_eval
+from .runner import RESULTS_DIR, rescore, run_eval
 
 DEFAULT_SKIP_TAGS = {"quota-heavy"}
 
@@ -21,7 +21,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--model", default="sonnet", help="sonnet (default), haiku for cheap practice runs")
     ap.add_argument("--repeat", type=int, default=1, help="attempts per case (checks consistency)")
     ap.add_argument("--list", action="store_true", help="list cases and exit")
+    ap.add_argument("--rescore", metavar="RUN_DIR",
+                    help="re-check a finished run's saved traces (no agent calls); name or path under evals/results")
     args = ap.parse_args(argv)
+
+    if args.rescore:
+        from pathlib import Path
+
+        run_dir = Path(args.rescore)
+        run_dir = run_dir if run_dir.is_dir() else RESULTS_DIR / args.rescore
+        run = rescore(run_dir, load_cases())
+        write(run, suffix="-rescored")
+        print(markdown(run))
+        print(f"Report: {run_dir / 'summary-rescored.md'}")
+        return 0 if all(r.passed for r in run.results) else 1
 
     cases = load_cases()
     if args.only:

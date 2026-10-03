@@ -114,6 +114,14 @@ class RunTrace:
     def tools_used(self) -> list[str]:
         return [c.tool for c in self.tool_calls]
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "RunTrace":
+        known = {f for f in cls.__dataclass_fields__}
+        t = cls(**{k: v for k, v in d.items() if k in known and k != "tool_calls"})
+        call_fields = set(ToolCall.__dataclass_fields__) - {"started"}
+        t.tool_calls = [ToolCall(**{k: v for k, v in c.items() if k in call_fields}) for c in d.get("tool_calls", [])]
+        return t
+
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         for c in d["tool_calls"]:

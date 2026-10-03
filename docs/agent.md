@@ -66,5 +66,5 @@ MCP launch: the server's own `.venv` Python, falling back to `uv run`. Override 
 
 ## Tests
 
-`uv run pytest` runs 26 offline tests (guard, trace, timing, config/options, CLI, evals).
+`uv run pytest` runs 28 offline tests (guard, trace, timing, config/options, CLI, evals).
 `tests/test_live.py` does one real end-to-end run when `TRAVEL_AGENT_LIVE=1`.

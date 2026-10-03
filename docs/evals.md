@@ -30,9 +30,14 @@ like that into checks that run every time.
 ## Coverage
 
 trip (4) · preferences (6) · RAG (6) · DGCA (2) · honesty (2) · guardrails (3) · status (1).
-`policy-conflicting-sources-look-in` is tagged `known-gap`. It reproduces a real conflict (the 2019
-DGCA rule says 5 days, IndiGo's current page says 7) and is expected to fail until the prompt is
-fixed. Seeing it go from failing to passing is the point.
+`policy-conflicting-sources-look-in` reproduces a real conflict found by hand (the 2019 DGCA rule says
+5 days, IndiGo's current page says 7). It passes on sonnet.
+
+## Results
+
+See [evals/baselines/](../evals/baselines/README.md). As of 2026-10-03: **sonnet 17/17, haiku 14/17.**
+The first sonnet run scored 15/17. Both failures turned out to be a bug in the grounding checker,
+not the agent. Check the checker before blaming the agent.
 
 ## Running
 
@@ -43,6 +48,7 @@ python -m uv run travel-eval --model haiku        # practice run
 python -m uv run travel-eval                      # scored run
 python -m uv run travel-eval --only <id> --repeat 3
 python -m uv run travel-eval --include-heavy      # + the 4-search guardrail case
+python -m uv run travel-eval --rescore <run-dir>  # re-check saved traces after fixing a check (no agent calls)
 ```
 
 Output: `evals/results/<timestamp>-<model>/summary.md` (pass rate, results by tag, a per-case

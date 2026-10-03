@@ -47,7 +47,7 @@ def markdown(run: EvalRun) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write(run: EvalRun) -> None:
+def write(run: EvalRun, suffix: str = "") -> None:
     assert run.out_dir
-    (run.out_dir / "results.json").write_text(run.to_json(), encoding="utf-8")
-    (run.out_dir / "summary.md").write_text(markdown(run), encoding="utf-8")
+    (run.out_dir / f"results{suffix}.json").write_text(run.to_json(), encoding="utf-8")
+    (run.out_dir / f"summary{suffix}.md").write_text(markdown(run), encoding="utf-8")

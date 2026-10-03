@@ -104,3 +104,22 @@ async def test_run_case_isolates_prefs_and_scores(monkeypatch, tmp_path):
     run = eval_runner.EvalRun(started_at="x", model="haiku", results=[r])
     md = markdown(run)
     assert "1/1" in md and "c1#1" in md
+
+
+def test_json_arrays_are_not_read_as_one_number():
+    t = trace("Typical range is ₹3,050–6,000.", [("search_flights", {}, '{"typical_range":[3050,6000]}')])
+    assert ungrounded_amounts(t) == []
+
+
+def test_rescore_saved_run(tmp_path):
+    import json
+
+    run_dir = tmp_path / "20261003-120000-sonnet"
+    tdir = run_dir / "traces" / "c1-1"
+    tdir.mkdir(parents=True)
+    saved = trace("Fee ₹4,999 (fetched 2026-10-01).", [("search_policies", {"airlines": ["6E"]}, POLICY)])
+    (tdir / "x.json").write_text(json.dumps(saved.to_dict()))
+    (run_dir / "results.json").write_text(json.dumps({"started_at": "20261003-120000", "model": "sonnet", "results": []}))
+    case = Case(id="c1", prompt="p", checks=Checks(answer_matches=["4,?999"], cites_policy_date=True, grounded_amounts=True))
+    run = eval_runner.rescore(run_dir, [case])
+    assert [r.passed for r in run.results] == [True]

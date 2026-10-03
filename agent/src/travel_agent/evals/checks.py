@@ -29,11 +29,14 @@ def _norm(n: str) -> int | None:
 
 
 def tool_numbers(trace: RunTrace) -> set[int]:
+    """Every number in tool outputs. A comma run is ambiguous: "6,000" is a formatted amount but
+    "[3050,6000]" is a JSON array, so add both the joined value and each comma-separated part."""
     nums: set[int] = set()
     for c in trace.tool_calls:
         for m in _NUMBER.findall(c.result_text):
-            if (v := _norm(m)) is not None:
-                nums.add(v)
+            for part in [m, *m.split(",")]:
+                if part and (v := _norm(part)) is not None:
+                    nums.add(v)
     return nums
 
 

@@ -74,6 +74,33 @@ async def run_case(case: Case, cfg: AgentConfig, out_dir: Path, attempt: int = 1
     )
 
 
+def rescore(run_dir: Path, cases: list[Case]) -> EvalRun:
+    """Re-run the checks on a finished run's saved traces (after fixing a check or case),
+    without calling the agent again."""
+    import re as _re
+
+    prev = json.loads((run_dir / "results.json").read_text(encoding="utf-8"))
+    by_id = {c.id: c for c in cases}
+    started = datetime.strptime(prev["started_at"], "%Y%m%d-%H%M%S").date()
+    run = EvalRun(started_at=prev["started_at"] + "-rescored", model=prev["model"], out_dir=run_dir)
+    for trace_dir in sorted((run_dir / "traces").iterdir()):
+        m = _re.match(r"(.+)-(\d+)$", trace_dir.name)
+        files = sorted(trace_dir.glob("*.json"))
+        if not (m and files and m.group(1) in by_id):
+            continue
+        case = by_id[m.group(1)].rendered(started)  # dates as of the original run
+        trace = RunTrace.from_dict(json.loads(files[-1].read_text(encoding="utf-8")))
+        checks = run_checks(case.checks, trace)
+        run.results.append(CaseResult(
+            case_id=case.id, tags=case.tags, attempt=int(m.group(2)), passed=all(c.passed for c in checks),
+            checks=checks, tools=trace.tools_used, turns=trace.turns, cost_usd=trace.cost_usd,
+            duration_ms=trace.duration_ms, answer=trace.answer, error=trace.error,
+        ))
+    order = {c.id: i for i, c in enumerate(cases)}
+    run.results.sort(key=lambda r: (order.get(r.case_id, 999), r.attempt))
+    return run
+
+
 async def run_eval(cases: list[Case], cfg: AgentConfig, repeat: int = 1, progress=print) -> EvalRun:
     started = datetime.now().strftime("%Y%m%d-%H%M%S")
     run = EvalRun(started_at=started, model=cfg.model, out_dir=RESULTS_DIR / f"{started}-{cfg.model}")
