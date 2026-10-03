@@ -35,9 +35,9 @@ trip (4) · preferences (7) · RAG (6) · DGCA (2) · honesty (3) · guardrails 
 
 ## Results
 
-See [evals/baselines/](../evals/baselines/README.md). As of 2026-10-03: **sonnet 17/17, haiku 14/17.**
+See [evals/baselines/](../evals/baselines/README.md). As of 2026-10-03 (after fixes): **sonnet 18/18, haiku 15/18** (haiku's misses vary run to run).
 The first sonnet run scored 15/17. Both failures turned out to be a bug in the grounding checker,
-not the agent. Check the checker before blaming the agent.
+not the agent. A second haiku run had 4 more checker false-negatives (over-strict regexes). Check the checker before blaming the agent, and add a test for every checker fix.
 
 ## Running
 

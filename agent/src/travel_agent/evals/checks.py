@@ -52,7 +52,10 @@ def ungrounded_amounts(trace: RunTrace) -> list[int]:
     pair of tool numbers would excuse almost anything, given how many numbers a search returns."""
     known = tool_numbers(trace)
     amounts = answer_amounts(trace.answer)
-    grounded = {v for v in amounts if v in known}
+    # Prices in a table under a "Price (₹)" header carry no ₹ sign, so the pool of quoted figures a
+    # difference may come from is every grounded number in the answer, not only ₹-prefixed ones.
+    quoted = {v for m in _NUMBER.findall(trace.answer) if (v := _norm(m)) is not None and v >= 100}
+    grounded = {v for v in quoted | set(amounts) if v in known}
     bad = []
     for v in amounts:
         if v in grounded:

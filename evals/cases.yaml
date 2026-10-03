@@ -87,7 +87,7 @@ cases:
       tool_args:
         - tool: search_flights
           args: {origin: DEL, destination: BOM, max_price: 2500}
-      answer_matches: ["(no|none|nothing|not any)[^.\n]{0,60}(under|within|below|at or under|fits?)[^.\n]{0,40}(budget|2,?500)|over (your )?budget|above (your )?budget|exceeds? (your )?budget"]
+      answer_matches: ["(no|none|nothing|not any)[^.\\n]{0,60}(under|within|below|at or under|fits?)[^.\\n]{0,40}(budget|2,?500)|(over|above|exceeds?)[^.\\n]{0,30}budget"]
       grounded_amounts: true
 
   - id: prefs-explicit-request-wins
@@ -178,7 +178,7 @@ cases:
     prompt: "If I book an IndiGo flight directly on their website today for a flight 6 days from now, can I cancel it for free within 48 hours?"
     checks:
       tools_include: [search_policies]
-      answer_matches: ["7\\s?days"]
+      answer_matches: ["(7|seven)\\s?(\\(seven\\)\\s?)?days"]
       answer_not_matches: ["^\\W*yes\\b"]
 
   - id: policy-uncovered-airline
@@ -187,7 +187,7 @@ cases:
     prompt: "What is Air India Express's cancellation fee for a domestic flight?"
     checks:
       tools_include: [search_policies]
-      answer_matches: ["(don.t|do not|couldn.t|could not|no)\\b[^.\\n]{0,40}(have|find|found|source|information|passages)|not (in|covered|available)|check (the|their) (airline|website|site)"]
+      answer_matches: ["(don.t|do not|couldn.t|could not|no)\\b[^.\\n]{0,40}(have|find|found|source|information|passages)|not (in|covered|available)|not [^.\\n]{0,40}(policy|page|source)|check(ing)? (the|their) (airline|website|site)"]
       grounded_amounts: true
 
   # --------------------------------------------------------- status & guardrails

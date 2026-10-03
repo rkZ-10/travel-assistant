@@ -34,6 +34,6 @@ Full setup, including saving the bot-blocked airline pages and connecting Claude
 - [x] RAG: airline and DGCA policy search with citations (hybrid BM25 + vectors)
 - [x] Saved travel preferences (read/update via MCP, approval-gated writes)
 - [x] Agent: Claude Agent SDK planner with guardrails and run traces
-- [x] Evals: 19 deterministic cases including ₹ grounding. **Baseline: sonnet 17/17, haiku 14/17** ([details](evals/baselines/README.md))
+- [x] Evals: 19 deterministic cases including ₹ grounding. **Latest: sonnet 18/18, haiku 15/18** ([details](evals/baselines/README.md))
 - [ ] Fix known gaps found by evals ([roadmap](docs/roadmap.md))
 - [ ] Booking via a sandbox provider (no bookable flight API is available to individual developers in India)

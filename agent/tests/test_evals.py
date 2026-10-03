@@ -123,3 +123,22 @@ def test_rescore_saved_run(tmp_path):
     case = Case(id="c1", prompt="p", checks=Checks(answer_matches=["4,?999"], cites_policy_date=True, grounded_amounts=True))
     run = eval_runner.rescore(run_dir, [case])
     assert [r.passed for r in run.results] == [True]
+
+
+def test_difference_of_table_prices_without_rupee_sign():
+    flights = '{"itineraries":[{"price":13434},{"price":13626}]}'
+    t = trace("| IX 1056 | 13,434 |\n| AI 2425 | 13,626 |\nAI costs ₹192 more.", [("search_flights", {}, flights)])
+    assert ungrounded_amounts(t) == []
+
+
+def test_case_regexes_accept_real_phrasings():
+    import re
+
+    cases = {c.id: c for c in load_cases()}
+
+    def ok(case_id, text):
+        return all(re.search(rx, text, re.I | re.S) for rx in cases[case_id].checks.answer_matches)
+
+    assert ok("prefs-budget-nothing-under", "The cheapest fare is ₹6,963, significantly over your ₹2,500 budget.")
+    assert ok("policy-conflicting-sources-look-in", "not available where departure is within 7 (seven) days")
+    assert ok("policy-uncovered-airline", "I found DGCA rules but not Air India Express's specific policy page.")
