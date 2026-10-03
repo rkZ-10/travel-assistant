@@ -10,7 +10,7 @@ AI agent for Indian domestic flight search, tracking and (later) booking, built 
 |---|---|---|
 | `mcp-server/` | MCP tools: `search_flights`, `get_flight_status`, `get_route_departures`, `get_api_usage` ([details](mcp-server/README.md)) | SerpApi (Google Flights) · AirLabs |
 | `rag/` | Policy sources (`sources.yaml`) for retrieval over airline baggage/fare/cancellation pages and DGCA passenger-rights rules. Code: `mcp-server/src/travel_mcp/rag/` | SQLite FTS5 + local embeddings (fastembed) |
-| `agent/` | Plans trips, calls MCP tools, checks options against RAG, asks for approval before booking | TBD |
+| `agent/` | Claude Agent SDK trip planner: preferences → search → fare-rule checks → recommendation, with code-enforced guardrails and per-run traces ([details](agent/README.md)) | Claude Agent SDK |
 | `evals/` | Booking-flow scenarios, tool-call accuracy, retrieval quality | — |
 
 ## Setup
@@ -24,6 +24,8 @@ cp .env.example .env   # add your API keys
 - [x] MCP server — day-of-travel status (AirLabs)
 - [x] RAG — airline + DGCA policy search with citations (hybrid BM25 + vectors)
 - [x] Saved travel preferences (read/update via MCP)
+- [x] Agent — Claude Agent SDK planner with guardrails + run traces
+- [ ] Evals — scored test questions over agent traces
 - [ ] Booking — sandbox provider (no bookable API available to individual devs in India)
 - [ ] RAG ingestion + retrieval
 - [ ] Agent with human-in-the-loop booking approval

@@ -18,7 +18,7 @@ Portfolio project demonstrating MCP server design, RAG and agent orchestration.
 ## Structure
 mcp-server/   MCP server package (src/travel_mcp): tools, providers, SQLite cache/quota
 rag/          sources.yaml + manual/ PDFs (code lives in mcp-server/src/travel_mcp/rag)
-agent/        orchestration, approval step before booking
+agent/        travel_agent package (Claude Agent SDK); talks to travel-mcp over MCP stdio only
 evals/        booking-flow scenarios, RAG accuracy
 
 ## Conventions
@@ -29,3 +29,9 @@ evals/        booking-flow scenarios, RAG accuracy
 - .env may have Windows CRLF line endings — strip \r when loading
 - Record API responses as test fixtures; tests must not hit live APIs
 - Never call booking create/cancel without an explicit user approval step
+
+## Agent (agent/)
+- claude-agent-sdk (bundles the CLI). Options: tools=[], strict_mcp_config, setting_sources=[]
+- Guardrails live in guard.py (PreToolUse hook), not only in the prompt: travel tools only, search cap, approval for preference writes
+- Runs saved to .data/agent_runs/*.json (input for evals)
+- `uv run pytest` offline; tests/test_live.py needs TRAVEL_AGENT_LIVE=1 (+ ANTHROPIC_API_KEY)
