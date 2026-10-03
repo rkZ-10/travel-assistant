@@ -1,37 +1,62 @@
 # travel-assistant — Claude Code Context
 
-## Project Overview
-AI travel assistant: Indian domestic flight tracking + booking.
-Portfolio project demonstrating MCP server design, RAG and agent orchestration.
+Personal AI assistant for Indian domestic flights: live fare search, fare-rule and passenger-rights
+answers with citations, saved preferences, and an eval suite. It's a portfolio project showing MCP
+server design, RAG, agent construction and evals. Full docs are in `docs/` (start with
+`docs/README.md`). **Keep this file and `docs/` up to date when you change behaviour.**
 
-## Stack
-- Python 3.12
-- MCP server (Python MCP SDK)
-- MCP SDK v2 (`from mcp.server.mcpserver import MCPServer`) — FastMCP was renamed in v2
-- Search: SerpApi Google Flights engine (live fares, INR, gl=in) — free plan ~250 searches/month
-- Day-of-travel status: AirLabs `schedules` (rolling ~12h window only) — free plan 1,000/month, expires 2026-10-30
-- On-demand only, no background polling
-- Booking: deferred. Duffel doesn't onboard India-incorporated accounts; plan is a sandbox BookingProvider
-- RAG: rag/sources.yaml -> `travel-rag ingest` -> rag/snapshots (gitignored) -> .data/policies.sqlite3 (FTS5 + fastembed bge-small, RRF)
-- Preferences: .data/preferences.json via get/update_travel_preferences (personal use only, no company policy)
+## Status (2026-10-03)
+- [x] MCP server: search (SerpApi Google Flights), status (AirLabs), 8 tools
+- [x] RAG: airline + DGCA policies, hybrid retrieval, freshness and block-page checks
+- [x] Preferences: get/update tools, approval-gated writes
+- [x] Agent: Claude Agent SDK planner with code-enforced guardrails and traces
+- [x] Evals: 18 cases, deterministic checks incl. ₹ grounding (baseline run pending)
+- [ ] Fix known gaps (conflicting sources; missing IX/SG/9I sources; 2026 DGCA refund CAR)
+- [ ] Booking via sandbox BookingProvider (no bookable API for individuals in India)
 
-## Structure
-mcp-server/   MCP server package (src/travel_mcp): tools, providers, SQLite cache/quota
-rag/          sources.yaml + manual/ PDFs (code lives in mcp-server/src/travel_mcp/rag)
-agent/        travel_agent package (Claude Agent SDK); talks to travel-mcp over MCP stdio only
-evals/        booking-flow scenarios, RAG accuracy
+## Layout
+```
+mcp-server/   travel_mcp: server.py (tools), providers/ (serpapi, airlabs, base CachedHTTP),
+              cache.py (SQLite TTL + quota), preferences.py, models.py, rag/ (extract, chunk,
+              ingest, index, cli). CLIs: travel-mcp, travel-rag
+rag/          sources.yaml (committed); manual/ + snapshots/ (gitignored captured pages)
+agent/        travel_agent: runner.py, guard.py, prompts.py, trace.py, cli.py, evals/.
+              CLIs: travel-agent, travel-eval
+evals/        cases.yaml; results/ (gitignored); baselines/ (committed summaries)
+docs/         architecture, mcp-server, rag, agent, evals, decisions, setup, operations, roadmap
+.data/        (gitignored) API cache/quota, policies.sqlite3, models/, preferences.json, agent_runs/
+```
+
+## Key facts and constraints
+- Python 3.12 on Windows. `uv` is run as `python -m uv`. Repo enforces LF (`.gitattributes`).
+- MCP SDK **v2**: `from mcp.server.mcpserver import MCPServer` (FastMCP was renamed); `mcp.Client` for in-memory tests.
+- SerpApi free plan ~250/month; AirLabs 1,000/month, **free key expires 2026-10-30**; AirLabs schedules cover ~12 h only.
+- Quota guard stops at 90 % of each budget. Cache: search 30 min (24 h in evals), status 5 min.
+- Duffel/Amadeus/Skyscanner aren't usable (see docs/decisions.md). Booking deferred.
+- IndiGo and Air India block non-browser clients: their pages are **saved manually** to
+  rag/manual/ (sources have both `url` and `file`). Don't add browser-spoofing headers.
+- RAG: FTS5 + fastembed `BAAI/bge-small-en-v1.5` (cached in .data/models) + RRF. Bump
+  `EXTRACTOR_VERSION` in rag/extract.py when extraction output changes.
+- DGCA CAR M-II in the index is the 2019 version, flagged superseded (revised 26 Mar 2026).
+- Agent auth: Claude Code login by default (counts toward plan usage; printed cost is an estimate);
+  optional `ANTHROPIC_API_KEY`. The user doesn't want pay-as-you-go spend.
 
 ## Conventions
-- API keys live in .env (never committed) — see .env.example
-- All HTTP goes through providers/base.py CachedHTTP (cache -> budget check -> call -> count); search TTL 30 min, status 5 min
-- AirLabs rows are mostly codeshares — collapse to operating flights (cs_flight_iata)
-- Tests: `uv run pytest` in mcp-server/ — offline, httpx.MockTransport + fixtures
-- .env may have Windows CRLF line endings — strip \r when loading
-- Record API responses as test fixtures; tests must not hit live APIs
-- Never call booking create/cancel without an explicit user approval step
+- Secrets only in `.env` (CRLF-tolerant loading). Never commit `.env`, snapshots, manual saves, or .data.
+- All HTTP goes through `providers/base.py` `CachedHTTP`. Validate inputs before spending quota.
+- Tool outputs are compact Pydantic models; anticipated failures raise `ToolError`.
+- Tests never hit live APIs: httpx.MockTransport, recorded fixtures (scrub keys and IP/geo data),
+  a fake embedder for RAG.
+- Agent guardrails live in code (guard.py PreToolUse hook), not only the prompt. Any write
+  (preferences now, booking later) needs explicit user approval.
+- The agent reaches the server only over MCP; never import travel_mcp from travel_agent.
+- Commit messages end with the Co-Authored-By / Claude-Session lines when Claude commits.
 
-## Agent (agent/)
-- claude-agent-sdk (bundles the CLI). Options: tools=[], strict_mcp_config, setting_sources=[]
-- Guardrails live in guard.py (PreToolUse hook), not only in the prompt: travel tools only, search cap, approval for preference writes
-- Runs saved to .data/agent_runs/*.json (input for evals)
-- `uv run pytest` offline; tests/test_live.py needs TRAVEL_AGENT_LIVE=1 (+ ANTHROPIC_API_KEY)
+## Commands
+```powershell
+cd mcp-server; python -m uv run pytest                       # 59 tests
+python -m uv run travel-rag ingest | sources | query "..."
+cd ..\agent;   python -m uv run pytest                       # 26 tests (+1 live, TRAVEL_AGENT_LIVE=1)
+python -m uv run travel-agent ask "..." -v | chat
+python -m uv run travel-eval [--model haiku] [--only id] [--repeat n] [--include-heavy]
+```

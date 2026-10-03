@@ -1,32 +1,39 @@
 # Travel Assistant
 
-AI agent for Indian domestic flight search, tracking and (later) booking, built with **MCP**, **RAG** and an agent layer on top.
+A personal AI assistant for Indian domestic flights. It searches live fares, answers fare-rule and
+passenger-rights questions with citations, remembers your preferences, and is measured by an eval
+suite. It's built with **MCP**, **RAG**, the **Claude Agent SDK** and deterministic **evals**.
 
-> Status: scaffolding. Private until ready to show.
+📚 **Docs:** [docs/README.md](docs/README.md): architecture, design decisions, setup, operations.
 
-## Architecture
+## Components
 
-| Layer | What it does | Backed by |
+| Folder | What it does | Backed by |
 |---|---|---|
-| `mcp-server/` | MCP tools: `search_flights`, `get_flight_status`, `get_route_departures`, `get_api_usage` ([details](mcp-server/README.md)) | SerpApi (Google Flights) · AirLabs |
-| `rag/` | Policy sources (`sources.yaml`) for retrieval over airline baggage/fare/cancellation pages and DGCA passenger-rights rules. Code: `mcp-server/src/travel_mcp/rag/` | SQLite FTS5 + local embeddings (fastembed) |
-| `agent/` | Claude Agent SDK trip planner: preferences → search → fare-rule checks → recommendation, with code-enforced guardrails and per-run traces ([details](agent/README.md)) | Claude Agent SDK |
-| `evals/` | Booking-flow scenarios, tool-call accuracy, retrieval quality | — |
+| [`mcp-server/`](mcp-server/README.md) | 8 MCP tools: flight search, day-of-travel status, policy search, preferences, quota usage | SerpApi (Google Flights) · AirLabs · SQLite |
+| [`rag/`](rag/README.md) | Official IndiGo, Air India, Akasa and DGCA pages → hybrid retrieval with citations and freshness checks | SQLite FTS5 + local bge-small embeddings (RRF) |
+| [`agent/`](agent/README.md) | Trip planner: preferences → search → fare rules and DGCA rights → cited recommendation, with guardrails enforced in code | Claude Agent SDK |
+| [`evals/`](evals/README.md) | 18 cases scoring tool use, arguments, citations, and whether every ₹ amount came from a tool | Real agent runs + deterministic checks |
 
-## Setup
+## Quick start (Windows)
 
-```bash
-cp .env.example .env   # add your API keys
+```powershell
+copy .env.example .env      # add SERPAPI_KEY and AIRLABS_API_KEY
+cd mcp-server; python -m uv sync --extra dev; python -m uv run travel-rag ingest
+cd ..\agent;   python -m uv sync --extra dev
+python -m uv run travel-agent ask "Cheapest nonstop HYD to MAA next Friday, and the cancellation fee?" -v
+python -m uv run travel-eval --model haiku
 ```
 
-## Roadmap
-- [x] MCP server — flight search (SerpApi / Google Flights)
-- [x] MCP server — day-of-travel status (AirLabs)
-- [x] RAG — airline + DGCA policy search with citations (hybrid BM25 + vectors)
-- [x] Saved travel preferences (read/update via MCP)
-- [x] Agent — Claude Agent SDK planner with guardrails + run traces
-- [ ] Evals — scored test questions over agent traces
-- [ ] Booking — sandbox provider (no bookable API available to individual devs in India)
-- [ ] RAG ingestion + retrieval
-- [ ] Agent with human-in-the-loop booking approval
-- [ ] Evals
+Full setup, including saving the bot-blocked airline pages and connecting Claude Desktop, is in
+[docs/setup.md](docs/setup.md).
+
+## Status
+
+- [x] MCP server: search (SerpApi / Google Flights) and day-of-travel status (AirLabs)
+- [x] RAG: airline and DGCA policy search with citations (hybrid BM25 + vectors)
+- [x] Saved travel preferences (read/update via MCP, approval-gated writes)
+- [x] Agent: Claude Agent SDK planner with guardrails and run traces
+- [x] Evals: 18 deterministic cases including ₹ grounding (baseline run pending)
+- [ ] Fix known gaps found by evals ([roadmap](docs/roadmap.md))
+- [ ] Booking via a sandbox provider (no bookable flight API is available to individual developers in India)
