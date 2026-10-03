@@ -16,5 +16,7 @@ was built to demonstrate **MCP server design, RAG, agent construction, and evals
 | [setup.md](setup.md) | Windows setup from scratch, Claude Desktop connection |
 | [operations.md](operations.md) | Quotas, costs, refreshing sources, troubleshooting |
 | [roadmap.md](roadmap.md) | Known gaps and what's next |
+| [development.md](development.md) | Workflow, test commands, conventions, how to add sources, tools, providers and eval cases |
+| [repo-map.md](repo-map.md) | Every file and folder in the repo, and what it's for |
 
-If you're new, read them in this order: architecture → decisions → whichever component you're touching.
+If you're new, read them in this order: architecture → repo-map → decisions → development → whichever component you're touching.

@@ -3,9 +3,10 @@
 Personal AI assistant for Indian domestic flights: live fare search, fare-rule and passenger-rights
 answers with citations, saved preferences, and an eval suite. It's a portfolio project showing MCP
 server design, RAG, agent construction and evals. Full docs are in `docs/` (start with
-`docs/README.md`). **Keep this file and `docs/` up to date when you change behaviour.**
+`docs/README.md`; `docs/repo-map.md` explains every file, `docs/development.md` the workflow).
+**Keep this file and `docs/` up to date when you change behaviour.**
 
-## Status (2026-10-03)
+## Status (2026-10-04)
 - [x] MCP server: search (SerpApi Google Flights), status (AirLabs), 8 tools
 - [x] RAG: airline + DGCA policies, hybrid retrieval, freshness and block-page checks
 - [x] Preferences: get/update tools, approval-gated writes
@@ -26,7 +27,7 @@ agent/        travel_agent: runner.py, guard.py, hooks.py (guard+timing+events),
               prompts.py, trace.py, web.py (FastAPI WS), cli.py, evals/. CLIs: travel-agent, travel-eval
 ui/           React 19 + Vite + TS + Tailwind v4 chat; state.ts reducer (vitest); dist/ + node_modules gitignored
 evals/        cases.yaml; results/ (gitignored); baselines/ (committed summaries)
-docs/         architecture, mcp-server, rag, agent, evals, decisions, setup, operations, roadmap
+docs/         architecture, repo-map, development, mcp-server, rag, agent, ui, evals, decisions, setup, operations, roadmap
 .data/        (gitignored) API cache/quota, policies.sqlite3, models/, preferences.json, agent_runs/
 ```
 

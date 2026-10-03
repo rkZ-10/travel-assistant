@@ -1,5 +1,7 @@
 # travel-agent
 
+> Full documentation: [docs/agent.md](../docs/agent.md), [docs/ui.md](../docs/ui.md), [docs/evals.md](../docs/evals.md).
+
 A trip-planning agent built on the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/python).
 It only uses the `travel-mcp` server, which it reaches over MCP stdio the same way Claude Desktop
 does, so the agent never imports server code.
@@ -50,6 +52,8 @@ cd ..\agent
 python -m uv sync --extra dev
 python -m uv run travel-agent ask "Cheapest nonstop HYD to MAA next Friday, and the cancellation fee?" -v
 python -m uv run travel-agent chat
+python -m uv run travel-agent web --open     # React chat UI (build ui/ first; see docs/ui.md)
+python -m uv run travel-eval                 # eval suite (see docs/evals.md)
 python -m uv run pytest                      # offline unit tests
 $env:TRAVEL_AGENT_LIVE=1; python -m uv run pytest tests/test_live.py -s   # one real end-to-end run
 ```

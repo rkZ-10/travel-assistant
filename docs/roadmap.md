@@ -11,6 +11,7 @@
 - **Fare type is assumed:** Google Flights doesn't say Saver vs Flexi. The agent states this assumption.
 
 ## Next
+0. UI approval dialog so preference saves work in the browser (and the same pattern is ready for booking).
 1. ~~Baseline eval run~~ (done 2026-10-03: sonnet 17/17). ~~Fixes for the haiku misses and
    max_price~~ (done; sonnet 18/18). Next: booking via the sandbox provider.
 2. Booking via a sandbox `BookingProvider`: hold → confirm (with approval) → fake PNR → cancel.

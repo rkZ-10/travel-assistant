@@ -1,5 +1,7 @@
 # travel-mcp
 
+> Full documentation: [docs/mcp-server.md](../docs/mcp-server.md) and [docs/rag.md](../docs/rag.md).
+
 MCP server for the Travel Assistant: flight **search** with live fares for Indian routes,
 **day-of-travel status**, **airline policy RAG**, and saved **travel preferences**. It uses the
 Python MCP SDK v2 (`MCPServer`) over stdio.
@@ -93,6 +95,5 @@ With a pip venv, use `"command": "D:\\My Projects\\01-travel-assistant\\mcp-serv
 
 ## Tests
 
-`tests/fixtures/airlabs_schedules_DEL_BOM.json` is a trimmed real AirLabs response.
-The SerpApi fixture is **synthetic** (built from the documented schema). Run
-`scripts/smoke_live.py --record` once to save a real response next to it.
+`tests/fixtures/` has trimmed and full real recordings from AirLabs and SerpApi (keys and IP/geo data scrubbed), plus a synthetic SerpApi fixture used by the unit tests.
+Run `scripts/smoke_live.py --record` to refresh the real recordings.
