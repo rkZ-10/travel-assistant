@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100;
+}
+
+/* Markdown tables from the agent: compact and readable in both themes. */
+.answer table {
+  @apply my-3 w-full text-sm;
+}
+.answer th {
+  @apply bg-stone-100 dark:bg-stone-800;
+}
+.answer th,
+.answer td {
+  @apply border border-stone-200 px-2 py-1 text-left dark:border-stone-700;
+}

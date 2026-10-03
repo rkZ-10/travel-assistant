@@ -50,13 +50,9 @@ def test_options_lock_agent_to_travel_tools(monkeypatch):
     cfg.mcp_env = {"TRAVEL_MCP_PREFS_DIR": "/tmp/case"}
     env = build_options(cfg, ToolGuard()).mcp_servers["travel"]["env"]
     assert env["TRAVEL_MCP_PREFS_DIR"] == "/tmp/case" and "PATH" in env
-    assert "PreToolUse" in o.hooks and "PostToolUse" not in o.hooks
-    from travel_agent.trace import ToolTimer
-
-    timed = build_options(cfg, ToolGuard(), ToolTimer())
-    pre = timed.hooks["PreToolUse"][0].hooks
-    assert pre[0].__func__.__name__ == "hook" and len(pre) == 2  # guard runs before the timer
-    assert "PostToolUse" in timed.hooks
+    pre = o.hooks["PreToolUse"][0].hooks
+    assert len(pre) == 1 and pre[0].__func__.__name__ == "pre"  # one combined guard+timer+events hook
+    assert {"PostToolUse", "PostToolUseFailure"} <= set(o.hooks)
 
 
 async def test_ask_once_retries_transient_auth_error(monkeypatch, tmp_path):
@@ -78,7 +74,7 @@ async def test_ask_once_retries_transient_auth_error(monkeypatch, tmp_path):
     from contextlib import asynccontextmanager
 
     @asynccontextmanager
-    async def fake_open(cfg, approver):
+    async def fake_open(cfg, approver, on_event=None):
         yield FakeAgent()
 
     monkeypatch.setattr(runner, "open_agent", fake_open)

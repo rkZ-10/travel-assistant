@@ -10,11 +10,14 @@ from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient, HookMatcher
 
 from .config import MCP_DIR, SERVER_NAME, TRAVEL_TOOLS, AgentConfig, mcp_command, mcp_name
 from .guard import Approver, ToolGuard, deny_all
+from .hooks import AgentHooks, EventSink
 from .prompts import system_prompt
-from .trace import RunTrace, ToolTimer
+from .trace import RunTrace
 
 
-def build_options(cfg: AgentConfig, guard: ToolGuard, timer: ToolTimer | None = None) -> ClaudeAgentOptions:
+def build_options(cfg: AgentConfig, hooks: AgentHooks | ToolGuard) -> ClaudeAgentOptions:
+    if isinstance(hooks, ToolGuard):
+        hooks = AgentHooks(hooks)
     cmd = mcp_command()
     return ClaudeAgentOptions(
         system_prompt=system_prompt(cfg.max_flight_searches),
@@ -36,9 +39,10 @@ def build_options(cfg: AgentConfig, guard: ToolGuard, timer: ToolTimer | None = 
         allowed_tools=[mcp_name(t) for t in TRAVEL_TOOLS],
         # Guardrails run before the permission check and can still deny allowed tools.
         hooks={
-            # Guard first: a denied call never starts the timer.
-            "PreToolUse": [HookMatcher(matcher=None, hooks=[guard.hook] + ([timer.pre] if timer else []))],
-            **({"PostToolUse": [HookMatcher(matcher=None, hooks=[timer.post])]} if timer else {}),
+            # One combined hook: guard decides first; only allowed calls are timed and reported.
+            "PreToolUse": [HookMatcher(matcher=None, hooks=[hooks.pre])],
+            "PostToolUse": [HookMatcher(matcher=None, hooks=[hooks.post])],
+            "PostToolUseFailure": [HookMatcher(matcher=None, hooks=[hooks.post_failure])],
         },
         max_turns=cfg.max_turns,
         max_budget_usd=cfg.max_budget_usd,
@@ -50,14 +54,15 @@ def build_options(cfg: AgentConfig, guard: ToolGuard, timer: ToolTimer | None = 
 class TravelAgent:
     """One conversation. `ask()` can be called repeatedly; context carries over."""
 
-    def __init__(self, cfg: AgentConfig, approver: Approver = deny_all) -> None:
+    def __init__(self, cfg: AgentConfig, approver: Approver = deny_all, on_event: EventSink | None = None) -> None:
         self.cfg = cfg
         self.guard = ToolGuard(cfg.max_flight_searches, approver)
-        self.timer = ToolTimer()
+        self.hooks = AgentHooks(self.guard, emit=on_event)
+        self.timer = self.hooks.timer
         self._client: ClaudeSDKClient | None = None
 
     async def __aenter__(self) -> "TravelAgent":
-        self._client = ClaudeSDKClient(options=build_options(self.cfg, self.guard, self.timer))
+        self._client = ClaudeSDKClient(options=build_options(self.cfg, self.hooks))
         await self._client.connect()
         return self
 
@@ -81,8 +86,10 @@ class TravelAgent:
 
 
 @asynccontextmanager
-async def open_agent(cfg: AgentConfig, approver: Approver = deny_all) -> AsyncIterator[TravelAgent]:
-    async with TravelAgent(cfg, approver) as agent:
+async def open_agent(
+    cfg: AgentConfig, approver: Approver = deny_all, on_event: EventSink | None = None
+) -> AsyncIterator[TravelAgent]:
+    async with TravelAgent(cfg, approver, on_event) as agent:
         yield agent
 
 
@@ -97,9 +104,10 @@ async def ask_once(
     approver: Approver = deny_all,
     retries: int = 2,
     retry_delay_s: float = 20.0,
+    on_event: EventSink | None = None,
 ) -> RunTrace:
     for attempt in range(retries + 1):
-        async with open_agent(cfg, approver) as agent:
+        async with open_agent(cfg, approver, on_event) as agent:
             trace = await agent.ask(prompt, save=False)
         if not is_transient_auth_error(trace) or attempt == retries:
             break

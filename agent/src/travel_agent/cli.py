@@ -20,6 +20,16 @@ async def console_approver(tool: str, tool_input: dict[str, Any]) -> bool:
     return answer.strip().lower() in {"y", "yes"}
 
 
+def live_printer(event: dict) -> None:
+    """-v: show tool activity as it happens."""
+    if event["type"] == "tool_start":
+        print(f"  · {event['label']}…", flush=True)
+    elif event["type"] == "tool_blocked":
+        print(f"  ✗ blocked: {event['label']} ({event['reason']})", flush=True)
+    elif event["type"] == "tool_end" and not event.get("ok"):
+        print(f"  ! {event.get('tool')} failed: {event.get('error')}", flush=True)
+
+
 def _summary(t: RunTrace, verbose: bool) -> str:
     tools = ", ".join(t.tools_used) or "none"
     cost = f"${t.cost_usd:.4f}" if t.cost_usd is not None else "n/a"
@@ -38,7 +48,7 @@ def _summary(t: RunTrace, verbose: bool) -> str:
 async def _ask(args: argparse.Namespace) -> int:
     cfg = AgentConfig.load(model=args.model, max_budget_usd=args.budget)
     approver = console_approver if args.allow_pref_changes else deny_all
-    trace = await ask_once(args.prompt, cfg, approver)
+    trace = await ask_once(args.prompt, cfg, approver, on_event=live_printer if args.verbose else None)
     if trace.answer:
         print(trace.answer)
     print(_summary(trace, args.verbose))
@@ -51,7 +61,7 @@ async def _ask(args: argparse.Namespace) -> int:
 async def _chat(args: argparse.Namespace) -> int:
     cfg = AgentConfig.load(model=args.model, max_budget_usd=args.budget)
     print("Travel assistant. Ask about flights, fares, baggage or status. Ctrl+C or 'exit' to quit.")
-    async with open_agent(cfg, console_approver) as agent:
+    async with open_agent(cfg, console_approver, live_printer if args.verbose else None) as agent:
         while True:
             try:
                 prompt = (await asyncio.to_thread(input, "\nyou> ")).strip()
@@ -82,7 +92,16 @@ def main(argv: list[str] | None = None) -> int:
     a.set_defaults(fn=_ask)
     c = sub.add_parser("chat", parents=[common], help="multi-turn conversation")
     c.set_defaults(fn=_chat)
+    w = sub.add_parser("web", parents=[common], help="chat in the browser (React UI)")
+    w.add_argument("--port", type=int, default=8765)
+    w.add_argument("--open", action="store_true", help="open the browser")
+    w.set_defaults(fn=None, web=True)
     args = ap.parse_args(argv)
+    if getattr(args, "web", False):
+        from .web import serve
+
+        serve(AgentConfig.load(model=args.model, max_budget_usd=args.budget), args.port, args.open)
+        return 0
     try:
         return asyncio.run(args.fn(args))
     except KeyboardInterrupt:

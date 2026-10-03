@@ -3,6 +3,8 @@
 ```mermaid
 flowchart LR
     U[You] --> CD[Claude Desktop]
+    U --> UI[React chat UI] -- WebSocket --> WEB[travel-agent web<br/>FastAPI]
+    WEB --> AG
     U --> AG[travel-agent<br/>Claude Agent SDK]
     EV[travel-eval] --> AG
     CD -- MCP stdio --> S
@@ -27,6 +29,7 @@ flowchart LR
 | `mcp-server/` | `travel_mcp` | The MCP server. It owns all external I/O: flight APIs, the policy index and preferences. It's usable on its own from Claude Desktop |
 | `rag/` | (data) | `sources.yaml` lists which official pages to index. `manual/` and `snapshots/` (both gitignored) hold the captured copies |
 | `agent/` | `travel_agent` | Trip-planning agent on the Claude Agent SDK. It reaches the server **only over MCP**, the same interface Claude Desktop uses |
+| `ui/` + `agent/…/web.py` | React chat UI on a localhost FastAPI WebSocket backend; streams live tool activity |
 | `agent/…/evals` + `evals/` | `travel_agent.evals` | Runs fixed cases through the real agent and scores the traces |
 | `.data/` | (gitignored) | Runtime state: API cache and quota counts, policy index, embedding model, preferences, agent run traces |
 

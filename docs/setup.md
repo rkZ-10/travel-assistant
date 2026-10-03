@@ -44,7 +44,7 @@ In `claude_desktop_config.json`:
 If `uv` isn't on PATH, use `"command": "D:\\My Projects\\01-travel-assistant\\mcp-server\\.venv\\Scripts\\travel-mcp.exe"` with no args.
 Fully quit Claude Desktop from the tray and reopen it.
 
-## 5. Agent and evals
+## 5. Agent, UI and evals
 
 ```powershell
 cd ..\agent
@@ -52,4 +52,7 @@ python -m uv sync --extra dev
 python -m uv run pytest
 python -m uv run travel-agent ask "Cheapest nonstop HYD to MAA next Friday?" -v
 python -m uv run travel-eval --model haiku
+
+cd ..\ui; npm install; npm run build
+cd ..\agent; python -m uv run travel-agent web --open   # chat UI at http://127.0.0.1:8765
 ```

@@ -60,7 +60,10 @@ The evals score these files.
 cd agent
 python -m uv run travel-agent ask "Cheapest nonstop HYD to MAA next Friday, and the cancellation fee?" -v
 python -m uv run travel-agent chat
+python -m uv run travel-agent web --open      # browser UI, see ui.md
 ```
+
+With `-v`, `ask` and `chat` print live activity ("· Searching flights HYD → MAA…").
 
 Options: `--model sonnet|opus|haiku|<id>` (or `TRAVEL_AGENT_MODEL`), `--budget`, `-v`.
 MCP launch: the server's own `.venv` Python, falling back to `uv run`. Override with
@@ -68,5 +71,5 @@ MCP launch: the server's own `.venv` Python, falling back to `uv run`. Override 
 
 ## Tests
 
-`uv run pytest` runs 30 offline tests (guard, trace, timing, config/options, CLI, evals).
+`uv run pytest` runs 38 offline tests (guard, trace, timing, hooks/activity, config/options, CLI, web backend, evals).
 `tests/test_live.py` does one real end-to-end run when `TRAVEL_AGENT_LIVE=1`.

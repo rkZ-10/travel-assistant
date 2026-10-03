@@ -10,6 +10,7 @@ was built to demonstrate **MCP server design, RAG, agent construction, and evals
 | [mcp-server.md](mcp-server.md) | The `travel-mcp` server: tools, providers, caching, quotas, validation, preferences |
 | [rag.md](rag.md) | Policy knowledge base: sources, ingestion, extraction, chunking, hybrid retrieval, freshness |
 | [agent.md](agent.md) | The Claude Agent SDK planner: workflow prompt, guardrails, traces, auth |
+| [ui.md](ui.md) | The React chat UI and its WebSocket backend: live tool activity, protocol, security |
 | [evals.md](evals.md) | How the agent is measured: cases, checks, grounding, running and reading results |
 | [decisions.md](decisions.md) | Why things are the way they are (API choices, trade-offs), in order |
 | [setup.md](setup.md) | Windows setup from scratch, Claude Desktop connection |
