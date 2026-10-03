@@ -45,6 +45,10 @@ def test_options_lock_agent_to_travel_tools(monkeypatch):
     assert o.mcp_servers["travel"] == {"type": "stdio", "command": "py", "args": ["-m", "travel_mcp.server"]}
     assert all(t.startswith("mcp__travel__") for t in o.allowed_tools) and len(o.allowed_tools) == 8
     assert o.model == "haiku" and o.max_budget_usd == 0.2
+    assert "env" not in o.mcp_servers["travel"]
+    cfg.mcp_env = {"TRAVEL_MCP_PREFS_DIR": "/tmp/case"}
+    env = build_options(cfg, ToolGuard()).mcp_servers["travel"]["env"]
+    assert env["TRAVEL_MCP_PREFS_DIR"] == "/tmp/case" and "PATH" in env
     assert "PreToolUse" in o.hooks and "PostToolUse" not in o.hooks
     from travel_agent.trace import ToolTimer
 

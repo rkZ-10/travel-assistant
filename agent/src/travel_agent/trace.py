@@ -14,12 +14,14 @@ from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock, ToolRes
 from .config import bare_name
 
 
-def _preview(content: Any, limit: int = 300) -> str:
+def _text(content: Any) -> str:
     if isinstance(content, list):
-        content = " ".join(
-            c.get("text", "") if isinstance(c, dict) else str(c) for c in content
-        )
-    text = str(content or "")
+        content = " ".join(c.get("text", "") if isinstance(c, dict) else str(c) for c in content)
+    return str(content or "")
+
+
+def _preview(content: Any, limit: int = 300) -> str:
+    text = _text(content)
     return text if len(text) <= limit else text[:limit] + "…"
 
 
@@ -30,6 +32,7 @@ class ToolCall:
     input: dict[str, Any]
     is_error: bool | None = None
     result_preview: str = ""
+    result_text: str = ""  # full tool output; evals check the answer is grounded in it
     started: float = field(default_factory=time.monotonic, repr=False)
     duration_ms: int | None = None
 
@@ -84,6 +87,7 @@ class RunTrace:
                 if isinstance(block, ToolResultBlock) and (call := by_id.get(block.tool_use_id)):
                     call.is_error = bool(block.is_error)
                     call.result_preview = _preview(block.content)
+                    call.result_text = _text(block.content)
                     call.duration_ms = int((time.monotonic() - call.started) * 1000)
         elif isinstance(message, ResultMessage):
             self.turns = message.num_turns

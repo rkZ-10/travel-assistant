@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -20,7 +21,16 @@ def build_options(cfg: AgentConfig, guard: ToolGuard, timer: ToolTimer | None = 
         model=cfg.model,
         # No built-in tools (Bash, files, web): the agent can only use the travel server.
         tools=[],
-        mcp_servers={SERVER_NAME: {"type": "stdio", "command": cmd[0], "args": cmd[1:]}},
+        mcp_servers={
+            SERVER_NAME: {
+                "type": "stdio",
+                "command": cmd[0],
+                "args": cmd[1:],
+                # Pass the full environment plus overrides, in case the CLI replaces rather than
+                # merges (Python on Windows won't start without SYSTEMROOT etc.).
+                **({"env": {**os.environ, **cfg.mcp_env}} if cfg.mcp_env else {}),
+            }
+        },
         strict_mcp_config=True,  # ignore any MCP servers from the user's Claude config
         setting_sources=[],  # ...and their CLAUDE.md / settings
         allowed_tools=[mcp_name(t) for t in TRAVEL_TOOLS],

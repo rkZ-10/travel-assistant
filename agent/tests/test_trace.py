@@ -27,6 +27,7 @@ def test_trace_collects_calls_results_and_cost(tmp_path):
     assert t.tools_used == ["get_travel_preferences", "search_flights"]
     assert t.tool_calls[0].result_preview == '{"home_airport":"HYD"}'
     assert t.tool_calls[1].is_error is True and t.tool_calls[1].result_preview.endswith("…")
+    assert len(t.tool_calls[1].result_text) == 1000
     assert t.answer == "Take IX 1831." and t.cost_usd == 0.0123 and t.turns == 3
     path = t.save(tmp_path)
     data = json.loads(path.read_text())

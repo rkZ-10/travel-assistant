@@ -59,6 +59,7 @@ class AgentConfig:
     max_flight_searches: int = 4  # per request; each live search costs 1 of ~250/month
     runs_dir: Path = field(default_factory=lambda: REPO_ROOT / ".data" / "agent_runs")
     env: dict[str, str] = field(default_factory=dict)
+    mcp_env: dict[str, str] = field(default_factory=dict)  # extra env for the travel-mcp process
 
     @classmethod
     def load(cls, **overrides) -> "AgentConfig":

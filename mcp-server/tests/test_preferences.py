@@ -54,3 +54,12 @@ def test_cross_field_rules(store):
         store.update(PreferencesUpdate(avoid_airlines=["6E"]))
     with pytest.raises(ValueError, match="unknown"):
         store.update(PreferencesUpdate(clear=["favourite_colour"]))
+
+
+def test_settings_env_overrides(monkeypatch, tmp_path):
+    from travel_mcp.config import Settings
+
+    monkeypatch.setenv("TRAVEL_MCP_PREFS_DIR", str(tmp_path / "case1"))
+    monkeypatch.setenv("TRAVEL_MCP_SEARCH_TTL", "86400")
+    s = Settings.load()
+    assert s.prefs_dir == tmp_path / "case1" and s.search_ttl == 86400

@@ -75,7 +75,7 @@ def build_services(settings: Settings | None = None) -> Services:
             s.serpapi_key, serp_http, s.search_ttl, s.currency, s.country, s.language
         ),
         status=AirLabsStatusProvider(s.airlabs_key, air_http, s.status_ttl),
-        prefs=PreferenceStore(s.data_dir),
+        prefs=PreferenceStore(s.prefs_dir or s.data_dir),
         policies=PolicyIndex(
             s.data_dir / "policies.sqlite3", FastEmbedder(cache_dir=s.data_dir / "models")
         ),

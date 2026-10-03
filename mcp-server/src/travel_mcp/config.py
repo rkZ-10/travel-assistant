@@ -15,6 +15,7 @@ class Settings:
     serpapi_key: str | None
     airlabs_key: str | None
     data_dir: Path
+    prefs_dir: Path | None = None  # defaults to data_dir; evals point this at a per-case temp dir
     currency: str = "INR"
     country: str = "in"
     language: str = "en"
@@ -41,4 +42,7 @@ class Settings:
             data_dir=data_dir,
             serpapi_monthly_budget=int(os.getenv("SERPAPI_MONTHLY_BUDGET", 250)),
             airlabs_monthly_budget=int(os.getenv("AIRLABS_MONTHLY_BUDGET", 1000)),
+            prefs_dir=Path(p) if (p := os.getenv("TRAVEL_MCP_PREFS_DIR")) else None,
+            # Evals pin search results for a day so repeated runs are free and comparable.
+            search_ttl=int(os.getenv("TRAVEL_MCP_SEARCH_TTL", 30 * 60)),
         )

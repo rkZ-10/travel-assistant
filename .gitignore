@@ -36,3 +36,6 @@ rag/snapshots/
 # Pages and PDFs saved by hand (third-party copies, like snapshots)
 rag/manual/*
 !rag/manual/.gitkeep
+
+# Eval run outputs (summaries worth keeping go in evals/baselines/)
+evals/results/
