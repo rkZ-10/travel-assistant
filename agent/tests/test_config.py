@@ -35,6 +35,7 @@ def test_system_prompt_has_date_and_budget():
 
     p = " ".join(system_prompt(4, datetime(2026, 10, 2, 9, 0, tzinfo=IST)).split())
     assert "2026-10-02 (Friday)" in p and "at most 4 searches" in p
+    assert "Preferences applied:" in p and 'airlines=["DGCA"]' in p
 
 
 def test_options_lock_agent_to_travel_tools(monkeypatch):

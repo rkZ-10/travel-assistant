@@ -10,8 +10,9 @@ server design, RAG, agent construction and evals. Full docs are in `docs/` (star
 - [x] RAG: airline + DGCA policies, hybrid retrieval, freshness and block-page checks
 - [x] Preferences: get/update tools, approval-gated writes
 - [x] Agent: Claude Agent SDK planner with code-enforced guardrails and traces
-- [x] Evals: 18 cases, deterministic checks incl. ₹ grounding. Baseline 2026-10-03: sonnet 17/17, haiku 14/17 (evals/baselines/)
-- [ ] Fix gaps: haiku misses, max_price returning unpriced results, missing IX/SG/9I sources, 2026 DGCA refund CAR
+- [x] Evals: 19 cases, deterministic checks incl. ₹ grounding. Baseline 2026-10-03: sonnet 17/17, haiku 14/17 (evals/baselines/)
+- [x] Post-baseline fixes: prompt hardening (prefs line, required DGCA call, exact arithmetic), max_price drops unpriced/over-budget + notes. Re-run pending
+- [ ] Missing IX/SG/9I policy sources; 2026 DGCA refund CAR
 - [ ] Booking via sandbox BookingProvider (no bookable API for individuals in India)
 
 ## Layout
@@ -54,7 +55,7 @@ docs/         architecture, mcp-server, rag, agent, evals, decisions, setup, ope
 
 ## Commands
 ```powershell
-cd mcp-server; python -m uv run pytest                       # 59 tests
+cd mcp-server; python -m uv run pytest                       # 62 tests
 python -m uv run travel-rag ingest | sources | query "..."
 cd ..\agent;   python -m uv run pytest                       # 28 tests (+1 live, TRAVEL_AGENT_LIVE=1)
 python -m uv run travel-agent ask "..." -v | chat

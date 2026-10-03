@@ -73,6 +73,7 @@ class SearchResult(BaseModel):
     price_insights: PriceInsights | None = None
     source_url: str | None = Field(None, description="Open these results on Google Flights")
     cached: bool = False
+    notes: list[str] = Field([], description="Caveats about these results; pass them on to the user")
 
 
 # ---------------------------------------------------------------- status ----

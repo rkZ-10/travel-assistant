@@ -102,6 +102,7 @@ class GoogleFlightsProvider:
             currency=self._currency,
             limit=limit,
             cached=cached,
+            max_price=max_price,
         )
 
 
@@ -158,12 +159,30 @@ def parse_search(
     currency: str,
     limit: int,
     cached: bool,
+    max_price: int | None = None,
 ) -> SearchResult:
     best = [_itinerary(r, True) for r in data.get("best_flights", []) or []]
     other = [_itinerary(r, False) for r in data.get("other_flights", []) or []]
     all_its = best + other
     if not all_its and "search_metadata" not in data:
         raise ProviderError("serpapi: unexpected response shape")
+
+    notes: list[str] = []
+    if max_price:
+        # When nothing fits the budget, Google returns unpriced or over-budget itineraries
+        # instead of an empty list. Don't let those pass as matches.
+        fits = [i for i in all_its if i.price is not None and i.price <= max_price]
+        dropped = len(all_its) - len(fits)
+        if dropped:
+            notes.append(
+                f"Removed {dropped} itinerary(ies) without a price or above the {currency} {max_price} limit."
+            )
+        if not fits:
+            notes.append(
+                f"No flights found at or under {currency} {max_price}. To show the cheapest available "
+                "fare, search again without max_price and tell the user it is over budget."
+            )
+        all_its = fits
 
     pi = data.get("price_insights")
     insights = (
@@ -186,4 +205,5 @@ def parse_search(
         price_insights=insights,
         source_url=(data.get("search_metadata") or {}).get("google_flights_url"),
         cached=cached,
+        notes=notes,
     )

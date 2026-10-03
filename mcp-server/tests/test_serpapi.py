@@ -51,3 +51,24 @@ async def test_api_error_surfaces(settings, store):
     with pytest.raises(ProviderError, match="Invalid API key"):
         await svc.search.search("DEL", "BOM", "2026-10-16")
     assert store.calls_this_month("serpapi") == 1
+
+
+async def test_max_price_drops_unpriced_and_over_budget(settings, store):
+    data = load(FIX)
+    data["other_flights"][0]["price"] = None  # Google's "nothing under budget" shape
+    svc = make_services(settings, store, Recorder(data), Recorder({}))
+    res = await svc.search.search("DEL", "BOM", "2026-10-16", max_price=6000)
+    assert [i.price for i in res.itineraries] == [5412]  # 6120 over budget, None unpriced
+    assert res.total_found == 1 and "Removed 2" in res.notes[0]
+
+
+async def test_max_price_nothing_fits_explains(settings, store):
+    svc = make_services(settings, store, Recorder(load(FIX)), Recorder({}))
+    res = await svc.search.search("DEL", "BOM", "2026-10-16", max_price=1000)
+    assert res.itineraries == [] and any("search again without max_price" in n for n in res.notes)
+
+
+async def test_no_max_price_no_notes(settings, store):
+    svc = make_services(settings, store, Recorder(load(FIX)), Recorder({}))
+    res = await svc.search.search("DEL", "BOM", "2026-10-16")
+    assert res.notes == [] and res.total_found == 3

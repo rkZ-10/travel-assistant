@@ -6,7 +6,7 @@ Python, MCP SDK **v2** (`from mcp.server.mcpserver import MCPServer`; v2 renamed
 
 | Tool | Backed by | Notes |
 |---|---|---|
-| `search_flights` | SerpApi Google Flights | One-way or round trip; class, nonstop, max price, airlines, sort; INR, `gl=in`. Returns ≤ `limit` compact itineraries, price insights and a Google Flights link |
+| `search_flights` | SerpApi Google Flights | One-way or round trip; class, nonstop, max price, airlines, sort; INR, `gl=in`. Returns ≤ `limit` compact itineraries, price insights, a Google Flights link, and `notes`. With `max_price`, unpriced or over-budget itineraries are dropped, because Google returns those instead of an empty list, and a note says when nothing fits |
 | `get_flight_status` | AirLabs `/schedules` | Next ~12 h only. Codeshare numbers resolve to the operating flight |
 | `get_route_departures` | AirLabs `/schedules` | Route departures in the next ~12 h, one row per operating flight |
 | `get_api_usage` | local | Calls used this month against each provider's budget |
@@ -68,6 +68,6 @@ plane). `collapse_codeshares` merges them into the operating flight's `marketed_
 
 ## Tests
 
-`uv run pytest` runs 59 offline tests using `httpx.MockTransport`. The fixtures include real
+`uv run pytest` runs 62 offline tests using `httpx.MockTransport`. The fixtures include real
 recorded SerpApi and AirLabs responses (keys and IP data scrubbed). `scripts/smoke_live.py
 [--record]` makes 2 real calls.

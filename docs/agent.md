@@ -5,18 +5,20 @@ CLI). It reaches `travel-mcp` over MCP stdio and has no other tools.
 
 ## Workflow (`prompts.py`)
 
-1. `get_travel_preferences`, applied as defaults. Anything the user says overrides them, and the
-   agent says which preferences it applied.
+1. `get_travel_preferences`, applied as defaults. Anything the user says overrides them. Every
+   answer opens with a "Preferences applied: …" line.
 2. If the origin, destination or date is missing: ask one question rather than guess. Relative
    dates are resolved against today's date (IST), which is injected into the prompt.
 3. One `search_flights` with the filters the preferences imply. Avoided airlines are dropped by the
    agent itself, since the search can't exclude them.
 4. A 2–3 option shortlist: the cheapest, the best timing, and the most flexible.
-5. `search_policies` for the shortlisted airlines. For cancellation or refund questions there's a
-   **second call for the DGCA refund rules**. The agent assumes the lowest fare type (Saver/Value)
+5. `search_policies` for the shortlisted airlines. For cancellation, refund or change questions a
+   **separate `airlines=["DGCA"]` call is required**. The agent assumes the lowest fare type (Saver/Value)
    and says so, quotes fees only from passages, cites the source and date, and passes on stale
    warnings.
-6. A recommendation, a small table, and a "Fare rules" section with citations.
+6. A recommendation, a small table, and a "Fare rules" section with citations. Prices are copied
+   exactly. Any difference quoted comes with both of the prices it's based on.
+   Search `notes` (e.g. "nothing under max_price") are followed and passed on to the user.
 
 ## Guardrails (`guard.py`, enforced in code)
 

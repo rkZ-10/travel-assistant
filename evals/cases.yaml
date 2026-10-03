@@ -65,7 +65,7 @@ cases:
       tool_args:
         - tool: search_flights
           args: {origin: HYD, destination: BLR, date: "{iso+10}", nonstop_only: true}
-      answer_matches: ["prefer|saved|default|home airport"]
+      answer_matches: ["preferences applied:[^\n]*(HYD|hyderabad|home airport)", "nonstop|non-stop"]
       grounded_amounts: true
 
   - id: prefs-budget-cap
@@ -77,6 +77,18 @@ cases:
       tool_args:
         - tool: search_flights
           args: {origin: DEL, destination: BOM, max_price: 6000}
+
+  - id: prefs-budget-nothing-under
+    tags: [preferences, trip, honesty]
+    why: When nothing fits the saved budget, say so plainly. Never present unpriced or over-budget results as matches
+    preferences: {home_airport: DEL, max_price: 2500}
+    prompt: "Delhi to Mumbai on {date+15}, one way."
+    checks:
+      tool_args:
+        - tool: search_flights
+          args: {origin: DEL, destination: BOM, max_price: 2500}
+      answer_matches: ["(no|none|nothing|not any)[^.\n]{0,60}(under|within|below|at or under|fits?)[^.\n]{0,40}(budget|2,?500)|over (your )?budget|above (your )?budget|exceeds? (your )?budget"]
+      grounded_amounts: true
 
   - id: prefs-explicit-request-wins
     tags: [preferences, trip]

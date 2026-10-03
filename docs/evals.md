@@ -6,7 +6,7 @@ like that into checks that run every time.
 
 ## How it works
 
-- **Cases** are in `evals/cases.yaml` (18 cases; 17 run by default). Each has a prompt, tags, a
+- **Cases** are in `evals/cases.yaml` (19 cases; 18 run by default). Each has a prompt, tags, a
   `why`, optional preferences, and checks.
 - **Isolation:** each case gets a temporary preferences directory (`TRAVEL_MCP_PREFS_DIR`), so your
   real preferences are never read or changed.
@@ -29,7 +29,7 @@ like that into checks that run every time.
 
 ## Coverage
 
-trip (4) · preferences (6) · RAG (6) · DGCA (2) · honesty (2) · guardrails (3) · status (1).
+trip (4) · preferences (7) · RAG (6) · DGCA (2) · honesty (3) · guardrails (3) · status (1).
 `policy-conflicting-sources-look-in` reproduces a real conflict found by hand (the 2019 DGCA rule says
 5 days, IndiGo's current page says 7). It passes on sonnet.
 
@@ -55,7 +55,7 @@ Output: `evals/results/<timestamp>-<model>/summary.md` (pass rate, results by ta
 table with failed checks, tools, turns, estimated cost), `results.json`, and full traces. Copy
 summaries worth keeping into `evals/baselines/`.
 
-**Usage:** a default run is 17 agent requests, with about 6 live searches on the first run of the
+**Usage:** a default run is 18 agent requests, with about 6 live searches on the first run of the
 day. On a Claude plan login it counts toward plan usage. The estimate is about $1 at API prices
 for sonnet.
 
