@@ -18,6 +18,7 @@ AIRLINE_NAMES = {
     "IX": "Air India Express",
     "QP": "Akasa Air",
     "SG": "SpiceJet",
+    "9I": "Alliance Air",
     "DGCA": "DGCA (regulator)",
 }
 

@@ -11,14 +11,15 @@ server design, RAG, agent construction and evals. Full docs are in `docs/` (star
 - [x] RAG: airline + DGCA policies, hybrid retrieval, freshness and block-page checks
 - [x] Preferences: get/update tools, approval-gated writes
 - [x] Agent: Claude Agent SDK planner with code-enforced guardrails and traces
-- [x] Evals: 21 cases, deterministic checks incl. ₹ grounding. Latest 2026-10-03b: sonnet 18/18, haiku 15/18 (evals/baselines/README.md)
+- [x] Evals: 22 cases, deterministic checks incl. ₹ grounding. Latest 2026-10-03b: sonnet 18/18, haiku 15/18 (evals/baselines/README.md)
 - [x] Post-baseline fixes: prompt hardening (prefs line, required DGCA call, exact arithmetic), max_price drops unpriced/over-budget + notes. Re-run done (sonnet 18/18)
 - [x] React chat UI (ui/) + FastAPI WebSocket backend (travel-agent web) with live tool activity
 - [x] Preferences panel (direct edit via REST → MCP bridge); flight cards grounded in search results (by flight number or booking_token), booking redirect to seller (get_booking_options on click only), expiry countdowns
 - [x] Web UI Claude access: detects local Claude login, else bring-your-own API key (auth.py, Auth.tsx); key-only mode
 - [ ] Host travel-mcp as a remote Claude connector so others use it on their own subscription ("option 1")
 - [ ] Run scripts/probe_booking.py to confirm airline-direct sellers; use booking fare types in answers
-- [ ] Missing IX/SG/9I policy sources; 2026 DGCA refund CAR
+- [x] IX/SG/9I policy sources (IX = manual saves: robots.txt + JS pages); ingest honours robots.txt
+- [ ] 2026 DGCA refund CAR (manual PDF); Star Air / Fly91 sources
 - [ ] Booking via sandbox BookingProvider (no bookable API for individuals in India)
 
 ## Layout

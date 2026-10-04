@@ -6,7 +6,7 @@ like that into checks that run every time.
 
 ## How it works
 
-- **Cases** are in `evals/cases.yaml` (21 cases; 20 run by default). A case with `ui: true` runs the agent in web mode, with the card tool available. Each has a prompt, tags, a
+- **Cases** are in `evals/cases.yaml` (22 cases; 21 run by default). A case with `ui: true` runs the agent in web mode, with the card tool available. Each has a prompt, tags, a
   `why`, optional preferences, and checks.
 - **Isolation:** each case gets a temporary preferences directory (`TRAVEL_MCP_PREFS_DIR`), so your
   real preferences are never read or changed.

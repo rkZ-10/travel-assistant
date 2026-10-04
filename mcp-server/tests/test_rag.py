@@ -67,6 +67,24 @@ def test_fetch_rejects_js_shell(tmp_path):
         fetch_source(SOURCES[0], tmp_path, _client(shell))
 
 
+def test_fetch_respects_robots_txt(tmp_path):
+    seen = []
+
+    def handler(req):
+        seen.append(req.url.path)
+        if req.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nDisallow: /content/dam/\n")
+        return httpx.Response(200, content=HTML.encode(), headers={"content-type": "text/html"})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    blocked = Source(id="b", airline="IX", title="x", url="https://example.com/content/dam/fees.pdf")
+    with pytest.raises(PermissionError, match="robots.txt"):
+        fetch_source(blocked, tmp_path, client)
+    assert "/content/dam/fees.pdf" not in seen  # the page itself was never requested
+    allowed = Source(id="a", airline="SG", title="x", url="https://example.com/terms")
+    assert "Saver" in fetch_source(allowed, tmp_path, client).markdown
+
+
 def test_fetch_all_reports_failures_and_uses_cache(tmp_path):
     ok = fetch_all(SOURCES[:1], tmp_path, client=_client(HTML.encode()))
     assert ok[0].status == "fetched"

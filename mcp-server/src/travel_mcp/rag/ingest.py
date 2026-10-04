@@ -7,6 +7,8 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.robotparser import RobotFileParser
 
 import httpx
 
@@ -17,6 +19,7 @@ UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/128.0 Safari/537.36 travel-assistant-rag/0.1 (personal, non-commercial)"
 )
+ROBOTS_AGENT = "travel-assistant-rag"
 MIN_TEXT = 300  # less than this after extraction usually means a JS-only shell or block page
 
 # Phrases from bot walls, CDN challenges and consent screens. Only checked near the top of the
@@ -101,6 +104,24 @@ def _extract(raw: bytes, content_type: str, hint: str) -> tuple[str, str | None,
     return md, title, "text/html"
 
 
+class RobotsDisallowed(PermissionError):
+    pass
+
+
+def robots_allowed(url: str, client: httpx.Client) -> bool:
+    """Honour the site's robots.txt for automated fetches. No robots.txt (or an error) = allowed."""
+    parts = urlsplit(url)
+    try:
+        resp = client.get(f"{parts.scheme}://{parts.netloc}/robots.txt")
+    except httpx.HTTPError:
+        return True
+    if resp.status_code >= 400:
+        return True
+    parser = RobotFileParser()
+    parser.parse(resp.text.splitlines())
+    return parser.can_fetch(ROBOTS_AGENT, url)
+
+
 def fetch_source(
     source: Source,
     snap_dir: Path = SNAPSHOT_DIR,
@@ -117,6 +138,10 @@ def fetch_source(
         own = client is None
         client = client or httpx.Client(timeout=45, follow_redirects=True, headers={"User-Agent": UA})
         try:
+            if not robots_allowed(source.url, client):  # type: ignore[arg-type]
+                raise RobotsDisallowed(
+                    f"robots.txt on {urlsplit(source.url).netloc} disallows automated fetching. Open "  # type: ignore[arg-type]
+                    f"{source.url} in a browser, save it under rag/manual/ and add a `file:` entry")
             resp = client.get(source.url)  # type: ignore[arg-type]
             resp.raise_for_status()
         finally:

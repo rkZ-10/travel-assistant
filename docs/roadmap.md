@@ -6,7 +6,10 @@
   (18/18). Measure haiku with `--repeat 3` before relying on it.
 - ~~`max_price` with nothing under budget~~: fixed in the server (unpriced/over-budget results are
   dropped, with notes), and covered by `prefs-budget-nothing-under`.
-- **No Air India Express, SpiceJet or Alliance Air policy sources.** Add official pages to `sources.yaml`.
+- ~~No Air India Express, SpiceJet or Alliance Air policy sources~~: added 2026-10-04 (IX saved by
+  hand). Star Air and Fly91 are still uncovered.
+- **Alliance Air's two documents disagree** on some cancellation amounts (tariff sheet vs FAQ). The
+  agent cites both; the tariff sheet is the fare-rule document.
 - **2026 DGCA refund CAR** isn't indexed yet (manual download needed).
 - **Fare type is assumed:** Google Flights doesn't say Saver vs Flexi. The agent states this assumption.
 

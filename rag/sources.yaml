@@ -3,6 +3,7 @@
 # `file:` paths are relative to this folder — use rag/manual/ for pages and PDFs you save yourself.
 # With both url and file, the saved file is indexed and the url is cited. IndiGo and Air India
 # don't answer non-browser clients, so save those pages from a browser (Ctrl+S, "Webpage, HTML only").
+# ingest honours robots.txt: a URL the site disallows for bots must be saved by hand instead.
 # `note:` is shown alongside every result from that source.
 # After editing:  uv run travel-rag ingest
 
@@ -61,6 +62,40 @@ sources:
     title: Akasa Air — Customer support FAQ
     url: https://www.akasaair.com/customer-support/faq
     topics: [cancellation, change, refund, baggage]
+
+  # Air India Express: robots.txt disallows automated fetching of its documents, and its FAQ pages
+  # are rendered by JavaScript, so both are saved from a browser.
+  - id: airindiaexpress-fees
+    airline: IX
+    title: Air India Express — Fees and charges (mandatory disclosure)
+    url: https://www.airindiaexpress.com/content/dam/airindiaexpress/documents/mandatory-disclosure/fees-and-charges.pdf
+    file: manual/airindiaexpress-fees.pdf
+    topics: [cancellation, change, fees, baggage]
+
+  - id: airindiaexpress-baggage-faq
+    airline: IX
+    title: Air India Express — Baggage FAQ
+    url: https://www.airindiaexpress.com/support/faqs/baggage
+    file: manual/airindiaexpress-baggage-faq.html
+    topics: [baggage]
+
+  - id: spicejet-terms
+    airline: SG
+    title: SpiceJet — Terms of carriage (change and cancellation fees, baggage)
+    url: https://corporate.spicejet.com/Tnc.aspx
+    topics: [cancellation, change, fees, baggage, refund]
+
+  - id: allianceair-tariff
+    airline: 9I
+    title: Alliance Air — Domestic tariff sheet (fare rules, effective 1 Sep 2025)
+    url: https://plone.allianceair.in/allianceair/en/assets/tariff-sheet/alliance-air-domestic-tariff-sheet_01sep25.pdf
+    topics: [fares, cancellation, change, refund]
+
+  - id: allianceair-faq
+    airline: 9I
+    title: Alliance Air — FAQs (Aug 2025)
+    url: https://plone.allianceair.in/allianceair/en/assets/faqs/faqs-25-8-2025.pdf
+    topics: [baggage, cancellation, refund]
 
   - id: dgca-car-m4
     airline: DGCA

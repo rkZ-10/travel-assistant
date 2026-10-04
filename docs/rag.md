@@ -11,9 +11,17 @@ capture dates.
 | IndiGo (6E) | Baggage, Fees & charges, Fare rules, Delays & cancellations | **Saved by hand** to `rag/manual/` (the site blocks non-browser clients) |
 | Air India (AI) | Smart Fares, Baggage FAQ | Saved by hand (same reason) |
 | Akasa (QP) | Baggage, FAQ | Fetched automatically |
+| Air India Express (IX) | Fees & charges (mandatory-disclosure PDF), Baggage FAQ | Saved by hand: robots.txt disallows bots on its documents, and the FAQ is rendered by JavaScript |
+| SpiceJet (SG) | Terms of carriage (change/cancellation fee table, baggage) | Fetched automatically |
+| Alliance Air (9I) | Domestic tariff sheet (fare rules, effective 1 Sep 2025), FAQs (Aug 2025) | Fetched automatically (PDF) |
 | DGCA | CAR M-IV (denied boarding/cancellation/delay, Rev 4 2023), CAR M-II (refunds, 2019 revision; **superseded** by the 26 Mar 2026 revision) | Fetched automatically (PDF) |
 
-Not covered (the agent says so instead of guessing): SpiceJet, Air India Express, Alliance Air.
+Not covered (the agent says so instead of guessing): Star Air, Fly91.
+
+`ingest` honours each site's robots.txt (agent name `travel-assistant-rag`). If a site disallows
+bots for a URL, the fetch stops before requesting the page and says to save it from a browser and
+add a `file:` entry. Manual saves are a person reading a public page, which robots.txt doesn't
+cover.
 Entries can have both `url` and `file`: the saved file is indexed, and the URL is what gets cited.
 The `note:` on a source is shown with every passage from it.
 
@@ -23,7 +31,7 @@ The `note:` on a source is shown with every passage from it.
 sources.yaml → ingest (fetch or read file) → extract → check → snapshot (.md + meta) → chunk → index
 ```
 
-1. **Fetch** with an honest User-Agent. Bot-blocked sites are captured with a manual browser save
+1. **Fetch** with an honest User-Agent, after checking robots.txt. Bot-blocked sites are captured with a manual browser save
    instead of spoofing a browser (see [decisions.md](decisions.md)).
 2. **Extract** HTML or PDF to light markdown (`extract.py`):
    - Fee **tables become pipe rows**.

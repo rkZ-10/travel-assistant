@@ -175,6 +175,18 @@ cases:
       answer_not_matches: ["cheapest fare type[^.]*UpFront", "UpFront[^.]*cheapest"]
       grounded_amounts: true
 
+  - id: policy-spicejet-cancel
+    tags: [rag]
+    why: SpiceJet source added 2026-10-04; its terms have one fee table (before 96 hours of departure -> 3999)
+    prompt: "I have a SpiceJet domestic ticket and want to cancel 6 days before the flight. What's the cancellation fee?"
+    checks:
+      tools_include: [search_policies]
+      tool_args:
+        - tool: search_policies
+          args: {airlines: {contains: SG}}
+      answer_matches: ["3,?999"]
+      grounded_amounts: true
+
   - id: policy-dgca-denied-boarding
     tags: [rag, dgca]
     why: Passenger-rights question answered from DGCA CAR M-IV
