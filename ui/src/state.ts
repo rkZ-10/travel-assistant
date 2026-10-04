@@ -54,21 +54,31 @@ export interface Turn {
 
 export type Connection = "connecting" | "open" | "closed";
 
+/** Which credentials the agent runs on (see agent/src/travel_agent/auth.py). */
+export interface Auth {
+  mode: "browser_key" | "server_key" | "claude_login" | "none";
+  label: string;
+  needs_key: boolean;
+  reason?: "login_expired" | "key_only" | "key_rejected" | "no_login";
+}
+
 export interface ChatState {
   connection: Connection;
   model?: string;
+  auth?: Auth;
+  authError?: string; // e.g. a malformed or rejected API key
   turns: Turn[];
 }
 
 export type ServerEvent =
-  | { type: "ready"; model: string }
+  | { type: "ready"; model: string; auth?: Auth }
   | { type: "turn_start" }
   | { type: "tool_start"; id: string; tool: string; label: string }
   | { type: "tool_end"; id: string; tool: string; ok: boolean; duration_ms?: number | null; error?: string | null }
   | { type: "tool_blocked"; id: string; tool: string; label: string; reason: string }
   | { type: "answer"; text: string; turns?: number | null; cost_usd?: number | null; duration_ms?: number | null; tools: string[] }
   | { type: "flight_cards"; cards: FlightCard[] }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string; code?: "needs_api_key" | "bad_api_key" };
 
 export type Action =
   | { type: "connection"; value: Connection }
@@ -110,7 +120,8 @@ export function reducer(state: ChatState, action: Action): ChatState {
 function applyEvent(state: ChatState, e: ServerEvent): ChatState {
   switch (e.type) {
     case "ready":
-      return { ...state, model: e.model, connection: "open" };
+      return { ...state, model: e.model, auth: e.auth ?? state.auth, connection: "open",
+        authError: e.auth?.reason === "key_rejected" ? state.authError : undefined };
     case "turn_start":
       return state;
     case "tool_start":
@@ -152,6 +163,7 @@ function applyEvent(state: ChatState, e: ServerEvent): ChatState {
         meta: { turns: e.turns, costUsd: e.cost_usd, durationMs: e.duration_ms, tools: e.tools },
       }));
     case "error": {
+      if (e.code === "bad_api_key") state = { ...state, authError: e.message };
       const last = state.turns[state.turns.length - 1];
       if (!last || last.status !== "working") return state; // e.g. a protocol error outside a turn
       return updateLast(state, (t) => ({ ...t, status: "error", error: e.message }));

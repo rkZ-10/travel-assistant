@@ -65,12 +65,43 @@ cd ..\agent; python -m uv run travel-agent web --open   # http://127.0.0.1:8765
 For UI development with hot reload, run `travel-agent web` in one terminal and `npm run dev` in
 `ui/` in another, then open http://localhost:5173. Vite proxies `/ws` and `/api` to :8765.
 
+## Claude access: login or API key
+
+The header shows a badge for what the agent runs on. Click it for details.
+
+| Badge | Meaning | Where it comes from |
+|---|---|---|
+| **Claude login** | Your Claude Code login. Chats count against your Claude plan | A stored login on this computer (`~/.claude/.credentials.json`, the macOS keychain, or `CLAUDE_CODE_OAUTH_TOKEN`) |
+| **API key (.env)** | `ANTHROPIC_API_KEY` from the environment or `.env`. Billed to that key | Server config |
+| **Your API key** | A key typed into this browser. Billed to it | The "Add an Anthropic API key" form |
+| **Not signed in** | Nothing usable found, so the chat asks for a key before it starts | — |
+
+The order is typed key > `.env` key > Claude login (`agent/src/travel_agent/auth.py`).
+
+- When a login is detected, there's nothing to set up and the key form stays hidden. "Use an API
+  key instead" in the badge's panel is there if you want it.
+- Detection reads files on disk, so it can't tell if the login has expired. If the first message
+  fails with an expired login, the chat shows the sign-in steps, an **I've signed in again** button
+  and the key form.
+- A typed key stays in that WebSocket session's memory and is passed only to that session's agent
+  process. It is never written to disk, logs or eval traces, and it's never echoed back in error
+  messages. A new connection starts without it unless you ticked **Remember on this browser**
+  (off by default), which stores it in this browser's localStorage and sends it again on connect.
+  **Forget my key** clears both.
+- Malformed keys (not `sk-ant-…`) are refused before use. A key Anthropic rejects is dropped (and
+  removed from the browser if remembered), with a message next to the form.
+- The cost line under each answer says "billed to the API key (est.)" in key modes and "counts as
+  plan usage" with the Claude login.
+- **Key-only mode:** start the server with `TRAVEL_WEB_KEY_ONLY=1` to ignore the Claude login. The
+  server's login must never serve other people (see [decision 16](decisions.md)), so any copy
+  that others can reach must run this way. `/api/health` reports `key_only`.
+
 ## Backend protocol (`web.py`)
 
 | Direction | Message |
 |---|---|
-| client → server | `{"type":"message","text":"…"}`, `{"type":"reset"}` |
-| server → client | `ready {model}` · `turn_start` · `tool_start {id,tool,label,input}` · `tool_end {id,ok,duration_ms,error}` · `tool_blocked {id,label,reason}` · `flight_cards {cards}` · `answer {text,turns,cost_usd,duration_ms,tools}` · `error {message}` |
+| client → server | `{"type":"message","text":"…"}`, `{"type":"reset"}`, `{"type":"set_api_key","key":"sk-ant-…"}`, `{"type":"clear_api_key"}` |
+| server → client | `ready {model, auth {mode, label, needs_key, reason?}}` · `turn_start` · `tool_start {id,tool,label,input}` · `tool_end {id,ok,duration_ms,error}` · `tool_blocked {id,label,reason}` · `flight_cards {cards}` · `answer {text,turns,cost_usd,duration_ms,tools}` · `error {message, code?}` (`needs_api_key`, `bad_api_key`) |
 | REST | `GET /api/preferences` · `PUT /api/preferences {changes}` · `POST /api/booking-options {booking_token, origin, destination, date, return_date}` · `GET /api/health` |
 
 The REST endpoints call travel-mcp through a direct MCP client (`mcp_bridge.py`) that's started
@@ -92,23 +123,27 @@ back as friendly messages, e.g. "home_airport must be a 3-letter IATA code".
 
 ```
 ui/src/
-  state.ts        pure reducer: server events -> turns/steps/cards (vitest)
-  useAgent.ts     WebSocket lifecycle, reconnect, send/reset
+  state.ts        pure reducer: server events -> turns/steps/cards/auth (vitest)
+  useAgent.ts     WebSocket lifecycle, reconnect, send/reset, setApiKey/clearApiKey (+ optional remembered key)
   api.ts          REST calls; openBooking() POSTs the redirect form in a new tab
   time.ts         expiry countdown hook, formatting helpers
   india.ts        domestic airport and airline lists for the preferences panel
   App.tsx         layout: header, conversation, composer, preferences panel
   components/     TurnView, Activity, FlightCardView (cards, options, expiry), PreferencesPanel
-                  (form -> {changes, clear}, tested), Composer, Welcome
+                  (form -> {changes, clear}, tested), Auth (badge, key form, panel), Composer, Welcome
 ```
 
 ## Tests
 
-- `npm test` runs the reducer and preferences-form tests (vitest, 7 tests).
+- `npm test` runs the reducer and preferences-form tests (vitest, 8 tests).
 - `npm run build` type-checks.
 - Backend: `agent/tests/test_web.py` uses a fake agent and a fake MCP bridge. It covers streaming
   order, session reuse and reset, error hints, origin checks (WebSocket and REST), the preferences
-  and booking endpoints, a bridge that fails to start, and friendly validation errors.
+  and booking endpoints, a bridge that fails to start, and friendly validation errors. It also
+  covers Claude access: no login → key required before the agent starts, malformed keys refused
+  and never echoed, a typed key reaching only that session's agent, key-only mode, rejected keys
+  dropped, and an expired login offering the key form. `test_auth.py` covers login detection and
+  the credential order.
 - `test_ui_tools.py` covers card grounding: response-shape parsing, unknown tokens rejected, and
   the guard blocking agent booking lookups.
 - `test_activity.py` covers labels and hook events (allowed, blocked, failed).

@@ -6,7 +6,7 @@
 |---|---|---|
 | SerpApi | ~250 searches/month, local stop at 225 | `get_api_usage` tool; serpapi.com dashboard |
 | AirLabs | 1,000/month, local stop at 900. **Free key expires 2026-10-30** | `get_api_usage`; AirLabs dashboard |
-| Claude (agent/evals) | Your plan's usage limits (or API billing if `ANTHROPIC_API_KEY` is set) | Claude settings / console |
+| Claude (agent/evals) | Your plan's usage limits (or API billing if `ANTHROPIC_API_KEY` is set or a key is entered in the web UI) | Claude settings / console |
 
 A trip request uses about 1 search. Each "See booking options" click uses 1 more. An eval run uses about 6 searches the first time each day,
 and 0 for re-runs that day.
@@ -24,7 +24,9 @@ and 0 for re-runs that day.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `Failed to refresh OAuth token` | Another Claude Code or Desktop process renewing the shared login | It's retried automatically. Otherwise wait a minute or close other Claude Code windows |
-| `OAuth session expired and could not be refreshed` | The stored Claude Code login itself expired (not a race) | Run `claude` in a terminal, type `/login`, then retry. Or set `ANTHROPIC_API_KEY` |
+| `OAuth session expired and could not be refreshed` | The stored Claude Code login itself expired (not a race) | Run `claude` in a terminal, type `/login`, then retry (in the web UI: **I've signed in again**). Or set `ANTHROPIC_API_KEY`, or enter a key in the web UI |
+| Web UI says **Not signed in** although you use Claude Code | No login file found (e.g. `CLAUDE_CONFIG_DIR` points elsewhere, or `TRAVEL_WEB_KEY_ONLY=1` is set) | Run `claude` → `/login` and reload, check `TRAVEL_WEB_KEY_ONLY`, or enter an API key |
+| "Anthropic rejected that API key" | Wrong, revoked or out-of-credit key | Create a new key in the Anthropic Console and enter it again |
 | `uv sync` fails with a locked `.exe` | Claude Desktop is running `travel-mcp` | Quit Claude Desktop from the tray, sync, then reopen |
 | `ingest` timeouts on IndiGo/Air India | The site blocks non-browser clients | Use the manual saves (already configured) |
 | `looks like a block or consent page` | The saved page was a cookie wall or bot check | Accept cookies in the browser and save again |

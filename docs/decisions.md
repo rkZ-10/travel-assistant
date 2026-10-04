@@ -83,3 +83,21 @@ Most recent last. Each entry gives the context, the decision, and the consequenc
 - The agent selects and annotates. It can't state the price, times or links on a card.
 - The backend fills cards from the recorded search results and rejects unknown tokens. An eval
   (`ui-flight-cards-from-search`) checks this.
+
+### 16. Web UI: detect the local Claude login, otherwise bring your own API key (2026-10-04)
+- Goal: anyone can run the UI, not only people with Claude Code signed in.
+- Anthropic doesn't allow third-party products to offer claude.ai login or plan limits to other
+  people (Agent SDK docs). So the Claude login is used only for the person running the server on
+  their own machine (127.0.0.1). Everyone else brings an Anthropic API key and pays for their own
+  usage.
+- The backend detects credentials (typed key > `.env` key > Claude Code login files) and tells the
+  UI, which shows a badge and only asks for a key when nothing usable is found. Detection can't
+  prove a login still works, so an expired login on the first message also switches the UI to
+  "sign in again or use an API key".
+- A typed key lives only in that WebSocket session's memory and that session's agent process. It
+  isn't written to disk, logs or traces. "Remember on this browser" (off by default) keeps it in
+  the browser's localStorage.
+- `TRAVEL_WEB_KEY_ONLY=1` turns the Claude login off entirely. Any deployment reachable by other
+  people must use it.
+- For other people using the tools through their own Claude subscription, the plan is to host the
+  MCP server as a Claude connector (later).

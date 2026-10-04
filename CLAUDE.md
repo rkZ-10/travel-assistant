@@ -15,6 +15,8 @@ server design, RAG, agent construction and evals. Full docs are in `docs/` (star
 - [x] Post-baseline fixes: prompt hardening (prefs line, required DGCA call, exact arithmetic), max_price drops unpriced/over-budget + notes. Re-run done (sonnet 18/18)
 - [x] React chat UI (ui/) + FastAPI WebSocket backend (travel-agent web) with live tool activity
 - [x] Preferences panel (direct edit via REST → MCP bridge); flight cards grounded in search results (by flight number or booking_token), booking redirect to seller (get_booking_options on click only), expiry countdowns
+- [x] Web UI Claude access: detects local Claude login, else bring-your-own API key (auth.py, Auth.tsx); key-only mode
+- [ ] Host travel-mcp as a remote Claude connector so others use it on their own subscription ("option 1")
 - [ ] Run scripts/probe_booking.py to confirm airline-direct sellers; use booking fare types in answers
 - [ ] Missing IX/SG/9I policy sources; 2026 DGCA refund CAR
 - [ ] Booking via sandbox BookingProvider (no bookable API for individuals in India)
@@ -47,6 +49,9 @@ docs/         architecture, repo-map, development, mcp-server, rag, agent, ui, e
 - DGCA CAR M-II in the index is the 2019 version, flagged superseded (revised 26 Mar 2026).
 - Agent auth: Claude Code login by default (counts toward plan usage; printed cost is an estimate);
   optional `ANTHROPIC_API_KEY`. The user doesn't want pay-as-you-go spend.
+- Web UI auth (auth.py): typed key > .env key > detected Claude login. Claude login only for the
+  local owner; `TRAVEL_WEB_KEY_ONLY=1` for anything others can reach (Agent SDK terms: no
+  claude.ai login for third parties). Typed keys: memory only, never logged/echoed/saved.
 
 ## Conventions
 - Secrets only in `.env` (CRLF-tolerant loading). Never commit `.env`, snapshots, manual saves, or .data.

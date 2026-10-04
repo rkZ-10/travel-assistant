@@ -10,6 +10,13 @@ AIRLABS_API_KEY=...        # airlabs.co, free plan
 SERPAPI_KEY=...            # serpapi.com, free plan
 ANTHROPIC_API_KEY=         # optional; leave empty to use your Claude Code login
 TRAVEL_AGENT_MODEL=        # optional; sonnet | opus | haiku
+TRAVEL_WEB_KEY_ONLY=       # optional; 1 = web UI ignores the Claude login, visitors enter a key
+```
+
+No Claude Code login and no key in `.env`? The web UI asks for an Anthropic API key in the browser
+instead (see [ui.md](ui.md#claude-access-login-or-api-key)).
+
+```
 ```
 
 ## 2. MCP server

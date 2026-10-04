@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AuthBadge, AuthPanel, KeyNeeded } from "./components/Auth";
 import { Composer } from "./components/Composer";
 import { PreferencesPanel } from "./components/PreferencesPanel";
 import { TurnView } from "./components/TurnView";
@@ -12,11 +13,17 @@ const STATUS = {
 } as const;
 
 export default function App() {
-  const { state, send, reset, busy } = useAgent();
+  const { state, send, reset, setApiKey, clearApiKey, busy } = useAgent();
   const bottom = useRef<HTMLDivElement>(null);
   const status = STATUS[state.connection];
-  const canSend = state.connection === "open" && !busy;
+  const needsKey = Boolean(state.auth?.needs_key);
+  const canSend = state.connection === "open" && !busy && !needsKey;
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const billed = state.auth?.mode === "browser_key" || state.auth?.mode === "server_key";
+  const keyCard = needsKey && state.auth && (
+    <KeyNeeded auth={state.auth} error={state.authError} onKey={setApiKey} onRetryLogin={clearApiKey} />
+  );
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -34,6 +41,7 @@ export default function App() {
           )}
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <AuthBadge auth={state.auth} onClick={() => setAuthOpen(true)} />
           <span className="flex items-center gap-1.5 text-stone-500">
             <span className={`size-2 rounded-full ${status.dot}`} title={status.text} />
             <span className="hidden sm:inline">{status.text}</span>
@@ -56,11 +64,13 @@ export default function App() {
 
       <main className="flex-1 overflow-y-auto px-4">
         <div className="mx-auto max-w-3xl space-y-6 py-6">
+          {state.turns.length === 0 && keyCard}
           {state.turns.length === 0 ? (
             <Welcome onPick={(t) => send(t)} disabled={!canSend} />
           ) : (
-            state.turns.map((t) => <TurnView key={t.id} turn={t} onSend={(text) => send(text)} />)
+            state.turns.map((t) => <TurnView key={t.id} turn={t} billed={billed} onSend={(text) => send(text)} />)
           )}
+          {state.turns.length > 0 && keyCard}
           <div ref={bottom} />
         </div>
       </main>
@@ -70,7 +80,7 @@ export default function App() {
           <Composer
             onSend={send}
             disabled={!canSend}
-            placeholder={busy ? "Working on it…" : "Ask about flights, fares, baggage or refunds"}
+            placeholder={busy ? "Working on it…" : needsKey ? "Add an API key above to start" : "Ask about flights, fares, baggage or refunds"}
           />
           <p className="mt-2 text-center text-xs text-stone-400">
             Fares and policies come from tools, with sources and dates. Booking happens on the
@@ -79,6 +89,8 @@ export default function App() {
         </div>
       </footer>
       <PreferencesPanel open={prefsOpen} onClose={() => setPrefsOpen(false)} />
+      <AuthPanel open={authOpen} onClose={() => setAuthOpen(false)} auth={state.auth} error={state.authError}
+        onKey={setApiKey} onForget={clearApiKey} />
     </div>
   );
 }

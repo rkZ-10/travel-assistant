@@ -4,17 +4,18 @@ import type { Turn } from "../state";
 import { Activity } from "./Activity";
 import { FlightCardView } from "./FlightCardView";
 
-function Meta({ meta }: { meta: NonNullable<Turn["meta"]> }) {
+function Meta({ meta, billed }: { meta: NonNullable<Turn["meta"]>; billed: boolean }) {
   const parts = [
     `${meta.tools.length} tool call${meta.tools.length === 1 ? "" : "s"}`,
     meta.turns != null && `${meta.turns} turns`,
     meta.durationMs != null && `${(meta.durationMs / 1000).toFixed(1)}s`,
-    meta.costUsd != null && `~$${meta.costUsd.toFixed(3)} est.`,
+    meta.costUsd != null &&
+      (billed ? `~$${meta.costUsd.toFixed(3)} billed to the API key (est.)` : `~$${meta.costUsd.toFixed(3)} est., counts as plan usage`),
   ].filter(Boolean);
   return <div className="mt-3 font-mono text-xs text-stone-400">{parts.join(" · ")}</div>;
 }
 
-export function TurnView({ turn, onSend }: { turn: Turn; onSend: (text: string) => void }) {
+export function TurnView({ turn, onSend, billed = false }: { turn: Turn; onSend: (text: string) => void; billed?: boolean }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
@@ -46,7 +47,7 @@ export function TurnView({ turn, onSend }: { turn: Turn; onSend: (text: string) 
             {turn.error}
           </div>
         )}
-        {turn.meta && <Meta meta={turn.meta} />}
+        {turn.meta && <Meta meta={turn.meta} billed={billed} />}
       </div>
     </div>
   );

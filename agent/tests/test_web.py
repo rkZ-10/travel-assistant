@@ -60,16 +60,23 @@ class FakeBridge:
 
 
 @contextmanager
-def client(tmp_path, error=None, bridge=None):
-    app = create_app(AgentConfig(model="haiku"), factory=lambda cfg, ev: FakeAgent(cfg, ev, error),
-                     ui_dist=tmp_path / "missing", bridge=bridge or FakeBridge())
+def client(tmp_path, error=None, bridge=None, key_only=False, login=True, cfg=None, seen=None):
+    def factory(cfg, ev):
+        if seen is not None:
+            seen.append(cfg)
+        return FakeAgent(cfg, ev, error)
+
+    app = create_app(cfg or AgentConfig(model="haiku"), factory=factory,
+                     ui_dist=tmp_path / "missing", bridge=bridge or FakeBridge(),
+                     key_only=key_only, login_present=lambda: login)
     with TestClient(app) as c:
         yield c
 
 
 def test_chat_turn_streams_activity_then_answer(tmp_path):
     with client(tmp_path) as c, c.websocket_connect("/ws") as ws:
-        assert ws.receive_json() == {"type": "ready", "model": "haiku"}
+        ready = ws.receive_json()
+        assert ready["type"] == "ready" and ready["model"] == "haiku" and ready["auth"]["mode"] == "claude_login"
         ws.send_json({"type": "message", "text": "HYD to MAA"})
         kinds = [ws.receive_json() for _ in range(4)]
         assert [k["type"] for k in kinds] == ["turn_start", "tool_start", "tool_end", "answer"]
@@ -112,7 +119,7 @@ def test_foreign_origin_rejected(tmp_path):
 
 def test_health_and_unbuilt_ui(tmp_path):
     with client(tmp_path) as c:
-        assert c.get("/api/health").json() == {"ok": True, "model": "haiku", "ui_built": False}
+        assert c.get("/api/health").json() == {"ok": True, "model": "haiku", "ui_built": False, "key_only": False}
         assert "npm run build" in c.get("/").text
 
 
@@ -172,3 +179,69 @@ def test_login_expired_vs_transient():
     race = RunTrace(prompt="p", model="m", error="completed: Failed to refresh OAuth token: another Claude Code process is refreshing it")
     assert is_login_expired(expired) and not is_transient_auth_error(expired)
     assert is_transient_auth_error(race) and not is_login_expired(race)
+
+
+KEY = "sk-ant-api03-" + "x" * 40
+
+
+def test_no_login_asks_for_key_and_uses_it_only_for_this_session(tmp_path):
+    seen = []
+    with client(tmp_path, login=False, seen=seen) as c, c.websocket_connect("/ws") as ws:
+        auth = ws.receive_json()["auth"]
+        assert auth["mode"] == "none" and auth["needs_key"]
+        ws.send_json({"type": "message", "text": "hi"})
+        err = ws.receive_json()
+        assert err["code"] == "needs_api_key" and not seen  # agent never started without credentials
+
+        ws.send_json({"type": "set_api_key", "key": "not-a-key"})
+        bad = ws.receive_json()
+        assert bad["code"] == "bad_api_key" and "not-a-key" not in bad["message"]
+
+        ws.send_json({"type": "set_api_key", "key": KEY})
+        assert ws.receive_json()["auth"]["mode"] == "browser_key"
+        ws.send_json({"type": "message", "text": "hi"})
+        assert [ws.receive_json()["type"] for _ in range(4)][-1] == "answer"
+        assert seen[0].env["ANTHROPIC_API_KEY"] == KEY
+
+        ws.send_json({"type": "clear_api_key"})
+        assert ws.receive_json()["auth"]["needs_key"]
+    with client(tmp_path, login=False) as c, c.websocket_connect("/ws") as ws:  # a new session starts clean
+        assert ws.receive_json()["auth"]["mode"] == "none"
+
+
+def test_key_only_mode_ignores_local_login(tmp_path):
+    with client(tmp_path, key_only=True, login=True) as c:
+        assert c.get("/api/health").json()["key_only"] is True
+        with c.websocket_connect("/ws") as ws:
+            auth = ws.receive_json()["auth"]
+            assert auth["mode"] == "none" and auth["reason"] == "key_only"
+
+
+def test_server_env_key_reported(tmp_path):
+    cfg = AgentConfig(model="haiku", env={"ANTHROPIC_API_KEY": KEY})
+    with client(tmp_path, cfg=cfg, login=False) as c, c.websocket_connect("/ws") as ws:
+        assert ws.receive_json()["auth"]["mode"] == "server_key"
+
+
+def test_rejected_key_is_dropped(tmp_path):
+    with client(tmp_path, login=False, error="API Error: 401 authentication_error invalid x-api-key") as c, \
+            c.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        ws.send_json({"type": "set_api_key", "key": KEY})
+        ws.receive_json()
+        ws.send_json({"type": "message", "text": "hi"})
+        events = [ws.receive_json() for _ in range(5)]
+        err = next(e for e in events if e["type"] == "error")
+        assert err["code"] == "bad_api_key" and KEY not in err["message"]
+        assert events[-1]["type"] == "ready" and events[-1]["auth"]["reason"] == "key_rejected"
+
+
+def test_expired_login_offers_key(tmp_path):
+    with client(tmp_path, error="OAuth session expired and could not be refreshed") as c, \
+            c.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        ws.send_json({"type": "message", "text": "hi"})
+        events = [ws.receive_json() for _ in range(5)]
+        assert events[-1]["type"] == "ready" and events[-1]["auth"]["reason"] == "login_expired"
+        ws.send_json({"type": "reset"})  # signed in again -> retry with the login
+        assert ws.receive_json()["auth"]["mode"] == "claude_login"

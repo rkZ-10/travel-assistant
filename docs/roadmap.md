@@ -20,4 +20,7 @@
 2. ~~Booking via a sandbox provider~~: replaced by redirecting to the seller (decision 13).
 3. Optional LLM-judge eval for answer quality (clarity, recommendation reasoning).
 4. Delay alerts for a booked flight: poll AirLabs only in the hours before departure.
-5. After 2026-10-30: renew AirLabs or switch status providers (one config change).
+5. Host travel-mcp as a remote MCP server people add to Claude as a custom connector, so others can
+   use the tools on their own Claude subscription. Needs a public host and protection for the
+   SerpApi/AirLabs quotas (per-user keys or rate limits).
+6. After 2026-10-30: renew AirLabs or switch status providers (one config change).

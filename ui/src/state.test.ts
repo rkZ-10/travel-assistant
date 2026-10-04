@@ -58,3 +58,21 @@ describe("flight cards", () => {
       [["a", "Recommended"], ["b", "Best timing"], ["c", "Flexible"]]);
   });
 });
+
+describe("auth", () => {
+  it("tracks the auth mode from ready and keeps key errors until the next ready", () => {
+    const login = { mode: "claude_login", label: "Your Claude login", needs_key: false } as const;
+    let s = run([ev({ type: "ready", model: "sonnet", auth: login })]);
+    expect(s.auth?.mode).toBe("claude_login");
+    s = run([ev({ type: "error", message: "bad", code: "bad_api_key" })], s);
+    expect(s.authError).toBe("bad");
+    s = run([ev({ type: "ready", model: "sonnet", auth: { mode: "browser_key", label: "k", needs_key: false } })], s);
+    expect(s.auth?.mode).toBe("browser_key");
+    expect(s.authError).toBeUndefined();
+    // a rejected key keeps its message visible next to the form
+    s = run([ev({ type: "error", message: "rejected", code: "bad_api_key" }),
+      ev({ type: "ready", model: "sonnet", auth: { mode: "none", label: "x", needs_key: true, reason: "key_rejected" } })], s);
+    expect(s.authError).toBe("rejected");
+    expect(s.auth?.needs_key).toBe(true);
+  });
+});

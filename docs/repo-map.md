@@ -8,7 +8,7 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 |---|---|
 | `README.md` | Project overview, component table, quick start, status |
 | `CLAUDE.md` | Context for Claude Code: status, layout, key facts, conventions, commands. Keep it current |
-| `.env.example` | Template for `.env`: `AIRLABS_API_KEY`, `SERPAPI_KEY`, optional `ANTHROPIC_API_KEY`, `TRAVEL_AGENT_MODEL` |
+| `.env.example` | Template for `.env`: `AIRLABS_API_KEY`, `SERPAPI_KEY`, optional `ANTHROPIC_API_KEY`, `TRAVEL_AGENT_MODEL`, `TRAVEL_WEB_KEY_ONLY` |
 | `.gitignore` | Excludes secrets, venvs, `.data/`, RAG snapshots and manual saves, eval results, UI build output |
 | `.gitattributes` | LF line endings everywhere; CRLF for `.bat/.cmd/.ps1`; PDFs and images as binary |
 
@@ -58,6 +58,7 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 | `src/travel_agent/trace.py` | `RunTrace` and `ToolCall`: a per-run record saved as JSON; `ToolTimer` |
 | `src/travel_agent/runner.py` | `build_options`, `TravelAgent` session, `ask_once` with OAuth-race retry |
 | `src/travel_agent/web.py` | FastAPI backend for the UI: WebSocket chat plus REST for preferences and booking options |
+| `src/travel_agent/auth.py` | Which credentials the agent runs on (typed key > `.env` key > Claude login), login detection, key-only mode |
 | `src/travel_agent/ui_tools.py` | Web-mode display tool `show_flight_cards`; `SearchRegistry` that grounds cards in search results |
 | `src/travel_agent/mcp_bridge.py` | Direct MCP client to travel-mcp for UI actions; friendly validation errors |
 | `src/travel_agent/cli.py` | `travel-agent ask / chat / web` |
@@ -80,7 +81,7 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 | `src/time.ts` | Expiry countdown hook and formatting helpers |
 | `src/prefs.test.ts` | Preferences form → `{changes, clear}` mapping test |
 | `src/useAgent.ts` | WebSocket lifecycle and reconnect |
-| `src/App.tsx`, `src/components/*` | Layout, turns, live activity, flight cards (`FlightCardView`), preferences panel (`PreferencesPanel`), composer, welcome screen |
+| `src/App.tsx`, `src/components/*` | Layout, turns, live activity, flight cards (`FlightCardView`), preferences panel (`PreferencesPanel`), Claude access badge and API-key form (`Auth`), composer, welcome screen |
 | `src/index.css` | Tailwind import, typography plugin, table styles |
 
 ## `evals/`

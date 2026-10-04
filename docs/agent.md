@@ -63,6 +63,10 @@ The evals score these files.
 - If another Claude process renews the shared login at the same moment, the run fails with an
   "OAuth token" message. `ask` retries this twice, 20 seconds apart.
 - **Optional: `ANTHROPIC_API_KEY` in `.env`.** Pay-as-you-go, with its own credentials.
+- **Web UI only: a key typed into the browser.** If the backend finds no usable credentials, the
+  UI asks for an Anthropic API key and uses it for that chat session only (see
+  [ui.md](ui.md#claude-access-login-or-api-key) and `auth.py`). `TRAVEL_WEB_KEY_ONLY=1` makes the
+  web UI ignore the Claude login, which any deployment used by other people must do.
 - A typical trip request takes 4–6 turns and about $0.05–0.08 at API prices.
 
 ## Usage
