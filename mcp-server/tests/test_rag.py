@@ -300,3 +300,23 @@ def test_page_wrapped_in_one_form_keeps_its_content():
             "<form><label>Search</label><input></form></form></body></html>")
     md, _ = html_to_markdown(html)
     assert "3999" in md and "Search" not in md
+
+
+def test_hand_rolled_tabs_label_their_panels():
+    fees = "<table><tr><td>Before 96 hours</td><td>3999</td></tr></table>" + "<p>" + "Domestic rules apply. " * 20 + "</p>"
+    html = ("<html><body><h2>Cancellations</h2>"
+            "<a id='triggerDomestic' href='javascript:void(0)'>Domestic</a>"
+            "<a id='triggerInternational' href='javascript:void(0)'>International</a>"
+            f"<div id='Domestic'>{fees}</div>"
+            f"<div id='International' style='display:none'>{fees.replace('3999', '9999')}</div>"
+            "</body></html>")
+    md, _ = html_to_markdown(html)
+    dom, intl = md.index("Domestic\n"), md.index("International\n")
+    assert dom < md.index("3999") < intl < md.index("9999")
+
+
+def test_table_inside_list_item_stays_a_table():
+    html = ("<html><body><ul><li>Cancellation fees:<table><tr><td>Scenario</td><td>Fee</td></tr>"
+            "<tr><td>Before 96 hours</td><td>3999</td></tr></table></li><li>Other rule</li></ul></body></html>")
+    md, _ = html_to_markdown(html)
+    assert "| Before 96 hours | 3999 |" in md and "- Cancellation fees:" in md and "- Other rule" in md

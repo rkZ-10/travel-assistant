@@ -185,6 +185,8 @@ cases:
         - tool: search_policies
           args: {airlines: {contains: SG}}
       answer_matches: ["3,?999"]
+      # 2026-10-04: passed on "3999" while the answer said it couldn't find a domestic fee
+      answer_not_matches: ["couldn.t find", "can.t give you a reliable", "don.t treat these as your domestic"]
       grounded_amounts: true
 
   - id: policy-dgca-denied-boarding

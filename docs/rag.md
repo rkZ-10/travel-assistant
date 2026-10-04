@@ -40,6 +40,9 @@ sources.yaml → ingest (fetch or read file) → extract → check → snapshot 
      rather than headings, so without this every table inherited an unrelated heading.
    - Duplicate blocks are removed only within the same section, so identical tables under
      different tabs both survive.
+   - Hand-rolled tabs (a trigger with `aria-controls`, `href="#id"` or an id like `triggerDomestic`
+     pointing at a panel) label their panels too, so SpiceJet's Domestic and International terms
+     don't blur together. A table inside a list item stays a table.
    - Forms are dropped as booking/search widgets, except a form holding most of the page:
      ASP.NET sites such as SpiceJet wrap the whole page in one `<form>`, which used to extract
      to nothing.

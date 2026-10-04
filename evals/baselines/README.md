@@ -62,3 +62,12 @@ its ₹999 cancellation fee, also on a flight card. New case `policy-basic-fare-
 - After telling it to name the fare type in the query (IndiGo "Saver", Air India "Basic"/"Value"):
   **3/3 pass** with sonnet (`--repeat 3`). It quotes ₹4,299 "if booked as Saver" and says the
   Lite fare has no fee table in the sources.
+
+## 2026-10-04: SpiceJet source, and a false pass
+
+`policy-spicejet-cancel` passed on its first run, but the answer said it couldn't find a domestic
+fee: "3999" only appeared while quoting an unlabelled fragment. Two extraction problems caused it.
+SpiceJet's Domestic/International tabs weren't recognised, and its fee table sat inside a list item
+and came out as loose lines. Both are fixed (EXTRACTOR_VERSION 4), and the case now also fails if
+the answer says it couldn't find the fee.
+

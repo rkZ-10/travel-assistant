@@ -9,7 +9,7 @@ import re
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 # Bump when extraction output changes: `ingest` then re-extracts saved snapshots without re-fetching.
-EXTRACTOR_VERSION = 3
+EXTRACTOR_VERSION = 4
 
 _DROP = ["script", "style", "noscript", "svg", "iframe", "button", "nav", "footer", "header",
          "input", "select", "textarea"]
@@ -54,6 +54,20 @@ def _tab_labels(soup: BeautifulSoup) -> None:
             except (ValueError, StopIteration, AttributeError):
                 label = None
         if label:
+            panel["data-rag-heading"] = label
+    # Hand-rolled tabs: a trigger points at its panel by aria-controls, href="#id", or an id like
+    # "triggerDomestic" for a panel with id "Domestic" (SpiceJet).
+    for trigger in soup.find_all(["a", "button", "li"]):
+        target = trigger.get("aria-controls") or ""
+        href = trigger.get("href") or ""
+        if not target and href.startswith("#") and len(href) > 1:
+            target = href[1:]
+        if not target and (tid := trigger.get("id") or "").lower().startswith("trigger"):
+            target = tid[len("trigger"):]
+        panel = soup.find(id=target) if target else None
+        label = _clean(trigger.get_text(" "))
+        if panel is not None and panel is not trigger and label and len(label) <= 40 \
+                and not panel.get("data-rag-heading") and len(panel.get_text(" ", strip=True)) > 200:
             panel["data-rag-heading"] = label
 
 
@@ -146,6 +160,12 @@ def html_to_markdown(html: str) -> tuple[str, str | None]:
                     heading(max(int(name[1]), sib_ctx + 1), text)
             elif (bold := _bold_heading(child)) is not None:
                 heading(sib_ctx + 1, bold)
+            elif name == "li" and child.find("table") is not None:
+                # A fee table inside a list item (SpiceJet): keep it a table, not one long line.
+                lead = _clean(" ".join(str(x) for x in child.children if isinstance(x, NavigableString)))
+                if lead:
+                    emit("- " + lead)
+                walk(child, sib_ctx)
             elif name == "li":
                 text = _clean(child.get_text(" "))
                 if text:
