@@ -41,8 +41,9 @@ and Claude Desktop because they're stored in the same file.
 ## How a card gets its facts (and why they can't be made up)
 
 1. The agent calls `show_flight_cards` (an in-process display tool, web mode only) with
-   `booking_token`s, a label and a note. It never passes prices or times.
-2. The backend looks each token up among this conversation's real `search_flights` results, which
+   flight numbers such as "6E 243" (or `booking_token`s), a label and a note. It never passes
+   prices or times.
+2. The backend looks each flight up among this conversation's real `search_flights` results, which
    the PostToolUse hook records, and fills in the airline, times, price and fetch time from there.
    Unknown tokens are rejected and the agent is told why. If the agent shows the same itinerary
    twice, the reducer replaces the earlier card instead of adding a duplicate. Cards render below

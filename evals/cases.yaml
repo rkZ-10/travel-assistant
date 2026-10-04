@@ -206,7 +206,7 @@ cases:
   - id: ui-flight-cards-from-search
     tags: [ui, trip, guardrail]
     ui: true
-    why: In the web UI the agent shows cards using booking_tokens copied from the search (unknown tokens are rejected), and never fetches booking links itself
+    why: In the web UI the agent shows cards by flight number from the search (flights not in the results are rejected), and never fetches booking links itself
     prompt: "Cheapest nonstop Hyderabad to Chennai on {date+14}?"
     checks:
       tools_include: [search_flights, show_flight_cards]

@@ -40,7 +40,7 @@ src/travel_mcp/
 
 | Provider | Free plan | Local budget stop | Cache TTL |
 |---|---|---|---|
-| SerpApi | ~250 searches/month | 90 % (225) | 30 min (24 h during evals) |
+| SerpApi | ~250 searches/month | 90 % (225) | 20 min (24 h during evals) |
 | AirLabs | 1,000 queries/month (key expires 2026-10-30) | 90 % (900) | 5 min |
 
 - Only real network calls count against the budget. Cache hits are free, and so are network errors that never reached the API.
@@ -66,7 +66,7 @@ plane). `collapse_codeshares` merges them into the operating flight's `marketed_
 |---|---|---|
 | `TRAVEL_MCP_DATA_DIR` | `<repo>/.data` | Where the cache, index, models and preferences live |
 | `TRAVEL_MCP_PREFS_DIR` | data dir | Evals give each case its own preferences |
-| `TRAVEL_MCP_SEARCH_TTL` | 1800 | Evals pin search results for 24 h |
+| `TRAVEL_MCP_SEARCH_TTL` | 1200 | 20 min, so a reused result still has 10+ min left on its ~30-min booking links. Evals pin results for 24 h |
 | `SERPAPI_MONTHLY_BUDGET` / `AIRLABS_MONTHLY_BUDGET` | 250 / 1000 | Change if you upgrade a plan |
 
 ## Tests

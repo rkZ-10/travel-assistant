@@ -24,7 +24,7 @@ class Settings:
     airlabs_monthly_budget: int = 1000
     budget_stop_ratio: float = 0.9
     # Cache TTLs in seconds
-    search_ttl: int = 30 * 60
+    search_ttl: int = 20 * 60  # booking links last ~30 min; reuse leaves >=10 min on them
     status_ttl: int = 5 * 60
 
     @classmethod
@@ -44,5 +44,5 @@ class Settings:
             airlabs_monthly_budget=int(os.getenv("AIRLABS_MONTHLY_BUDGET", 1000)),
             prefs_dir=Path(p) if (p := os.getenv("TRAVEL_MCP_PREFS_DIR")) else None,
             # Evals pin search results for a day so repeated runs are free and comparable.
-            search_ttl=int(os.getenv("TRAVEL_MCP_SEARCH_TTL", 30 * 60)),
+            search_ttl=int(os.getenv("TRAVEL_MCP_SEARCH_TTL", 20 * 60)),
         )

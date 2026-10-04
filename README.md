@@ -11,19 +11,27 @@ suite. It's built with **MCP**, **RAG**, the **Claude Agent SDK** and determinis
 A real run in the web UI: "Cheapest non-stop flight to Chennai on Oct 14", with saved preferences
 (home HYD, nonstop, 05:00–10:00, prefers IndiGo).
 
-**1. Live tool activity, preferences applied, shortlist and fare rules with sources**
+**1. Preferences: pick airports and airlines by name; every search uses them**
+
+![Preferences panel](docs/images/preferences.png)
+
+**2. Live tool activity, preferences applied, shortlist and fare rules with sources**
 
 ![Chat answer](docs/images/chat-answer.png)
 
-**2. Flight cards filled from the real search result, with fare expiry**
+The ✗ step is the grounding check at work: the model garbled a booking token, the backend refused
+to show a card for a flight that wasn't in the search results, and the model retried. Cards are now
+keyed by flight number, which is harder to garble.
+
+**3. Flight cards filled from the real search result, with fare expiry**
 
 ![Flight cards](docs/images/chat-cards.png)
 
-**3. "See booking options": airline direct first, then travel sites, with link expiry**
+**4. "See booking options": airline direct first, then travel sites, with link expiry**
 
 ![Booking options](docs/images/booking-options.png)
 
-**4. "Book on IndiGo" opens the airline's page with 6E 243 already selected**
+**5. "Book on IndiGo" opens the airline's page with 6E 243 already selected**
 
 ![IndiGo booking page](docs/images/airline-redirect.png)
 

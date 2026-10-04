@@ -14,7 +14,7 @@ server design, RAG, agent construction and evals. Full docs are in `docs/` (star
 - [x] Evals: 21 cases, deterministic checks incl. ₹ grounding. Latest 2026-10-03b: sonnet 18/18, haiku 15/18 (evals/baselines/README.md)
 - [x] Post-baseline fixes: prompt hardening (prefs line, required DGCA call, exact arithmetic), max_price drops unpriced/over-budget + notes. Re-run done (sonnet 18/18)
 - [x] React chat UI (ui/) + FastAPI WebSocket backend (travel-agent web) with live tool activity
-- [x] Preferences panel (direct edit via REST → MCP bridge); flight cards grounded by booking_token, booking redirect to seller (get_booking_options on click only), expiry countdowns
+- [x] Preferences panel (direct edit via REST → MCP bridge); flight cards grounded in search results (by flight number or booking_token), booking redirect to seller (get_booking_options on click only), expiry countdowns
 - [ ] Run scripts/probe_booking.py to confirm airline-direct sellers; use booking fare types in answers
 - [ ] Missing IX/SG/9I policy sources; 2026 DGCA refund CAR
 - [ ] Booking via sandbox BookingProvider (no bookable API for individuals in India)
@@ -58,7 +58,7 @@ docs/         architecture, repo-map, development, mcp-server, rag, agent, ui, e
   (preferences now, booking later) needs explicit user approval.
 - The agent reaches the server only over MCP; never import travel_mcp from travel_agent.
 - Web backend binds 127.0.0.1 and checks Origin on WebSocket and REST; keep it local-only.
-- Cards: agent passes booking_tokens only; backend fills facts from recorded search results. Agent may never call get_booking_options (AGENT_DENIED); links fetched on user click only.
+- Cards: agent passes flight numbers (or booking_tokens) only; backend fills facts from recorded search results. Agent may never call get_booking_options (AGENT_DENIED); links fetched on user click only.
 - Commit messages end with the Co-Authored-By / Claude-Session lines when Claude commits.
 
 ## Commands

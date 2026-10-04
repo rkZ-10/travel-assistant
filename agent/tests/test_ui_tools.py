@@ -4,7 +4,7 @@ from travel_agent.config import AgentConfig
 from travel_agent.guard import ToolGuard
 from travel_agent.hooks import AgentHooks
 from travel_agent.runner import TravelAgent, build_options
-from travel_agent.ui_tools import SearchRegistry, build_ui_server
+from travel_agent.ui_tools import SearchRegistry, _norm_flights, build_ui_server
 
 RESULT = {
     "origin": "HYD", "destination": "MAA", "date": "2026-10-17", "return_date": None, "currency": "INR",
@@ -45,7 +45,7 @@ async def test_cards_use_search_facts_and_reject_unknown_tokens():
         {"booking_token": "tok-6e243-aaaaaaaa", "label": "Best timing", "note": "Saver: cancel ₹4,299 (72h+)"},
         {"booking_token": "tok-made-up-zzzz", "label": "Invented"},
     ]})
-    assert not ok.get("is_error") and "Skipped (unknown booking_token): Invented" in ok["content"][0]["text"]
+    assert not ok.get("is_error") and "Skipped (not in this conversation's search results): Invented" in ok["content"][0]["text"]
     card = events[0]["cards"][0]
     assert events[0]["type"] == "flight_cards" and len(events[0]["cards"]) == 1
     assert card["itinerary"]["price"] == 7069 and card["label"] == "Best timing" and card["links_valid_minutes"] == 30
@@ -80,3 +80,25 @@ def test_web_mode_options(monkeypatch):
     cli = build_options(AgentConfig(), ToolGuard())
     assert "ui" not in cli.mcp_servers and "show_flight_cards" not in cli.system_prompt
     assert "mcp__travel__get_booking_options" not in cli.allowed_tools
+
+
+async def test_cards_by_flight_number_tolerate_spacing_and_dedupe():
+    reg = SearchRegistry()
+    reg.record({}, RESULT)
+    events = []
+    _, card_tool = build_ui_server(reg, events.append)
+    r = await card_tool.handler({"flights": [
+        {"flight": "6e243", "label": "Preferred"},
+        {"booking_token": "tok-6e243-aaaaaaaa"},          # same itinerary again -> one card
+        {"flight": "AI 999", "label": "Not searched"},
+    ]})
+    cards = events[0]["cards"]
+    assert [c["booking_token"] for c in cards] == ["tok-6e243-aaaaaaaa"] and cards[0]["itinerary"]["price"] == 7069
+    assert "AI 999" in r["content"][0]["text"]
+    assert reg.find(flight="") is None and reg.find("garbled-token") is None
+
+
+def test_flight_number_normalisation():
+    assert _norm_flights("6E 243") == _norm_flights("6e-243") == _norm_flights("6E243") == "6E243"
+    assert _norm_flights("6E 243 + 6E 512") == _norm_flights("6E243, 6E512") == "6E243,6E512"
+    assert _norm_flights("9I 893") == "9I893" and _norm_flights("cheapest") == ""

@@ -69,7 +69,8 @@ Never invent prices, fees, times or rules. Prices are INR; times are local airpo
 WEB_ADDENDUM = """
 ## Web UI
 You're talking to the user in a browser. After you pick your shortlist, call show_flight_cards
-with 1-3 itineraries: pass each booking_token exactly as search_flights returned it, a short label
+with 1-3 itineraries: identify each by its flight number(s) as search_flights listed them
+(e.g. "6E 243"; for a connection "6E 243, 6E 512"), plus a short label
 ("Cheapest", "Best timing", "Most flexible") and a one-line note (e.g. the cancellation fee and its
 source). The cards show airline, times and price from the search, and a "See booking options"
 button that opens the airline's (or a travel site's) page with the flight preselected. Call it

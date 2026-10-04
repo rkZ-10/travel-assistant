@@ -38,9 +38,10 @@ The guard runs before the permission check, so it can deny even auto-allowed too
 ## Web mode (`ui_tools.py`)
 
 `TravelAgent(..., ui=True)` (which `travel-agent web` uses) adds an in-process MCP server `ui` with
-`show_flight_cards`, plus a prompt section on using it. The agent passes only `booking_token`s, a
-label and a note. The backend fills each card from the recorded search result and rejects unknown
-tokens. The guard's `AGENT_DENIED` list stops the agent calling `get_booking_options`: booking links
+`show_flight_cards`, plus a prompt section on using it. The agent passes only flight numbers (or
+`booking_token`s), a label and a note. The backend fills each card from the recorded search result
+and rejects flights that weren't in this conversation's results. Flight numbers replaced tokens as
+the main key after a real run where the model garbled a long token while copying it. The guard's `AGENT_DENIED` list stops the agent calling `get_booking_options`: booking links
 are fetched only on a user click.
 
 ## Traces (`trace.py`)
