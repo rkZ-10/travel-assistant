@@ -3,6 +3,7 @@ name = "travel-agent"
 version = "0.1.0"
 description = "Trip-planning agent (Claude Agent SDK) on top of the travel-mcp server"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "claude-agent-sdk>=0.2.163,<0.3",

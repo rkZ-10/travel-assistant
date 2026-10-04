@@ -3,6 +3,7 @@ name = "travel-mcp"
 version = "0.1.0"
 description = "MCP server for Indian domestic flight search, day-of-travel status, airline policy RAG and travel preferences"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=2.2,<3",

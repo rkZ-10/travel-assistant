@@ -8,6 +8,7 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 |---|---|
 | `README.md` | Project overview, component table, quick start, status |
 | `CLAUDE.md` | Context for Claude Code: status, layout, key facts, conventions, commands. Keep it current |
+| `LICENSE` | MIT license for the code |
 | `.env.example` | Template for `.env`: `AIRLABS_API_KEY`, `SERPAPI_KEY`, optional `ANTHROPIC_API_KEY`, `TRAVEL_AGENT_MODEL`, `TRAVEL_WEB_KEY_ONLY` |
 | `.gitignore` | Excludes secrets, venvs, `.data/`, RAG snapshots and manual saves, eval results, UI build output |
 | `.gitattributes` | LF line endings everywhere; CRLF for `.bat/.cmd/.ps1`; PDFs and images as binary |

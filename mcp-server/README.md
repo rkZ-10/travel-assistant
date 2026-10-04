@@ -62,7 +62,7 @@ API keys go in the repo-root `.env` (see `../.env.example`).
 With [uv](https://docs.astral.sh/uv/):
 
 ```powershell
-cd "D:\My Projects\01-travel-assistant\mcp-server"
+cd path\to\travel-assistant\mcp-server
 uv sync --extra dev
 uv run pytest                       # offline tests, no API calls
 uv run python scripts/smoke_live.py # 2 real API calls
@@ -85,13 +85,13 @@ Add this to `claude_desktop_config.json`, then fully quit and reopen Claude:
   "mcpServers": {
     "travel-assistant": {
       "command": "uv",
-      "args": ["--directory", "D:\\My Projects\\01-travel-assistant\\mcp-server", "run", "travel-mcp"]
+      "args": ["--directory", "C:\\path\\to\\travel-assistant\\mcp-server", "run", "travel-mcp"]
     }
   }
 }
 ```
 
-With a pip venv, use `"command": "D:\\My Projects\\01-travel-assistant\\mcp-server\\.venv\\Scripts\\travel-mcp.exe"` and no args.
+With a pip venv, use `"command": "C:\\path\\to\\travel-assistant\\mcp-server\\.venv\\Scripts\\travel-mcp.exe"` and no args.
 
 ## Tests
 

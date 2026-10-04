@@ -47,7 +47,7 @@ The agent runs on the Claude Agent SDK, which ships with its own Claude Code CLI
   own credentials, so no login clashes.
 
 ```powershell
-cd "D:\My Projects\01-travel-assistant\mcp-server"; python -m uv sync --extra dev   # server venv (once)
+cd path\to\travel-assistant\mcp-server; python -m uv sync --extra dev   # server venv (once)
 cd ..\agent
 python -m uv sync --extra dev
 python -m uv run travel-agent ask "Cheapest nonstop HYD to MAA next Friday, and the cancellation fee?" -v

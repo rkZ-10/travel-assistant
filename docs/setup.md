@@ -22,7 +22,7 @@ instead (see [ui.md](ui.md#claude-access-login-or-api-key)).
 ## 2. MCP server
 
 ```powershell
-cd "D:\My Projects\01-travel-assistant\mcp-server"
+cd path\to\travel-assistant\mcp-server
 python -m uv sync --extra dev
 python -m uv run pytest
 python -m uv run python scripts/smoke_live.py      # 2 real API calls
@@ -45,10 +45,10 @@ In `claude_desktop_config.json`:
 ```json
 { "mcpServers": { "travel-assistant": {
     "command": "uv",
-    "args": ["--directory", "D:\\My Projects\\01-travel-assistant\\mcp-server", "run", "travel-mcp"] } } }
+    "args": ["--directory", "C:\\path\\to\\travel-assistant\\mcp-server", "run", "travel-mcp"] } } }
 ```
 
-If `uv` isn't on PATH, use `"command": "D:\\My Projects\\01-travel-assistant\\mcp-server\\.venv\\Scripts\\travel-mcp.exe"` with no args.
+If `uv` isn't on PATH, use `"command": "C:\\path\\to\\travel-assistant\\mcp-server\\.venv\\Scripts\\travel-mcp.exe"` with no args.
 Fully quit Claude Desktop from the tray and reopen it.
 
 ## 5. Agent, UI and evals

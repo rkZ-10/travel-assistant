@@ -73,3 +73,9 @@ Full setup, including saving the bot-blocked airline pages and connecting Claude
 - [x] Web UI runs on your Claude login when it finds one, otherwise on your own Anthropic API key
 - [ ] Fix known gaps found by evals ([roadmap](docs/roadmap.md))
 - [x] Booking handled by redirecting to the airline or travel site (no bookable flight API is available to individual developers in India)
+
+## License
+
+[MIT](LICENSE) for the code in this repo. It doesn't cover airline names, logos or the airline page
+screenshot in `docs/images`, and anyone running it is bound by SerpApi's, AirLabs' and Anthropic's
+terms for their own keys.
