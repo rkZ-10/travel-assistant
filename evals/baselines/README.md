@@ -71,3 +71,8 @@ SpiceJet's Domestic/International tabs weren't recognised, and its fee table sat
 and came out as loose lines. Both are fixed (EXTRACTOR_VERSION 4), and the case now also fails if
 the answer says it couldn't find the fee.
 
+
+`--tags rag` after the extractor changes: 8/9. The one failure, `policy-uncovered-airline`, was
+the case going stale: it asked about Air India Express to prove the agent admits missing sources,
+and now that IX is indexed the agent correctly answered ₹4,300. That case now asks about Star Air,
+and a new `policy-airindiaexpress-cancel` checks the IX fee.

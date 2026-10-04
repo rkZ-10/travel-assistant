@@ -207,10 +207,24 @@ cases:
       answer_matches: ["(7|seven)\\s?(\\(seven\\)\\s?)?days"]
       answer_not_matches: ["^\\W*yes\\b"]
 
+  - id: policy-airindiaexpress-cancel
+    tags: [rag]
+    why: Air India Express fees PDF added 2026-10-04; Value/Business cancellation is ₹4,300 (Lite refunds taxes only)
+    prompt: "What is Air India Express's cancellation fee for a domestic flight?"
+    checks:
+      tools_include: [search_policies]
+      tool_args:
+        - tool: search_policies
+          args: {airlines: {contains: IX}}
+      answer_matches: ["4,?300"]
+      grounded_amounts: true
+
   - id: policy-uncovered-airline
     tags: [rag, honesty]
-    why: No Air India Express source is indexed; the agent must say so instead of inventing fees
-    prompt: "What is Air India Express's cancellation fee for a domestic flight?"
+    why: >-
+      No Star Air source is indexed; the agent must say so instead of inventing fees. (Was Air India
+      Express until its fees PDF was added on 2026-10-04; it then answered correctly and this failed.)
+    prompt: "What is Star Air's cancellation fee for a domestic flight?"
     checks:
       tools_include: [search_policies]
       answer_matches: ["(don.t|do not|couldn.t|could not|no)\\b[^.\\n]{0,40}(have|find|found|source|information|passages)|not (in|covered|available)|not [^.\\n]{0,40}(policy|page|source)|check(ing)? (the|their) (airline|website|site)"]

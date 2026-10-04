@@ -45,7 +45,7 @@ Booking and payment happen on the seller's site. The assistant never books or pa
 | [`rag/`](rag/README.md) | Official IndiGo, Air India, Akasa and DGCA pages → hybrid retrieval with citations and freshness checks | SQLite FTS5 + local bge-small embeddings (RRF) |
 | [`agent/`](agent/README.md) | Trip planner: preferences → search → fare rules and DGCA rights → cited recommendation, with guardrails enforced in code | Claude Agent SDK |
 | [`ui/`](docs/ui.md) | Browser chat with live tool activity, flight cards with **"Book on IndiGo ↗"** redirects and expiry countdowns, and a preferences panel | React + Vite + Tailwind, FastAPI |
-| [`evals/`](evals/README.md) | 22 cases scoring tool use, arguments, citations, and whether every ₹ amount came from a tool | Real agent runs + deterministic checks |
+| [`evals/`](evals/README.md) | 23 cases scoring tool use, arguments, citations, and whether every ₹ amount came from a tool | Real agent runs + deterministic checks |
 
 ## Quick start (Windows)
 
@@ -67,7 +67,7 @@ Full setup, including saving the bot-blocked airline pages and connecting Claude
 - [x] RAG: airline and DGCA policy search with citations (hybrid BM25 + vectors)
 - [x] Saved travel preferences (read/update via MCP, approval-gated writes)
 - [x] Agent: Claude Agent SDK planner with guardrails and run traces
-- [x] Evals: 22 deterministic cases including ₹ grounding. **Latest: sonnet 18/18, haiku 15/18** ([details](evals/baselines/README.md))
+- [x] Evals: 23 deterministic cases including ₹ grounding. **Latest: sonnet 18/18, haiku 15/18** ([details](evals/baselines/README.md))
 - [x] React chat UI with live tool activity
 - [x] Flight cards that redirect to the seller's booking page; preferences panel
 - [x] Web UI runs on your Claude login when it finds one, otherwise on your own Anthropic API key
