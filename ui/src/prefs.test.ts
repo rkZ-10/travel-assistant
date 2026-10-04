@@ -13,4 +13,11 @@ describe("preferences form -> changes", () => {
       notes: ["Aisle near front"], clear: ["max_price"],
     });
   });
+
+  it("airline chips and airport select produce the same codes the server stores", () => {
+    const form = { home_airport: "BLR", preferred_airlines: "QP, 6E", avoid_airlines: "SG", cabin: "", max_stops: "",
+      earliest_departure: "", latest_departure: "", seat: "", checked_bag: false, fare_flexibility: "", max_price: "7000",
+      meal: "", notes: "" };
+    expect(toChanges(form, blank)).toEqual({ home_airport: "BLR", preferred_airlines: ["QP", "6E"], avoid_airlines: ["SG"] });
+  });
 });

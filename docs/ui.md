@@ -24,7 +24,12 @@ browser (React) ──WebSocket /ws──> travel-agent web (FastAPI, 127.0.0.1:
 - A **Preferences panel** (header button): a form to view and edit every saved preference directly,
   covering home airport, airlines, stops, departure window, seat, checked bag, fare flexibility,
   budget, meal and notes. It shows the last-saved time and any validation errors. Changes are made
-  by you, so there's no approval step.
+  by you, so there's no approval step. Nobody has to know IATA codes: home airport is a dropdown of
+  Indian airports shown by city ("Hyderabad (HYD)"), and airlines are tap-to-toggle chips by name
+  (IndiGo, Air India, Akasa Air...). The panel still stores codes, which is what the MCP server
+  validates. Picking an airline in "Preferred" removes it from "Avoid" and vice versa. A code saved
+  earlier through chat or the CLI that isn't in the list still shows, so it isn't lost. The lists
+  live in `ui/src/india.ts` (domestic only for now).
 - Per-answer footer: tool calls, turns, time and estimated cost.
 - Starter prompts, a "New chat" button (which starts a fresh agent session), a connection status
   indicator with auto-reconnect, dark mode, and a mobile layout.
@@ -90,6 +95,7 @@ ui/src/
   useAgent.ts     WebSocket lifecycle, reconnect, send/reset
   api.ts          REST calls; openBooking() POSTs the redirect form in a new tab
   time.ts         expiry countdown hook, formatting helpers
+  india.ts        domestic airport and airline lists for the preferences panel
   App.tsx         layout: header, conversation, composer, preferences panel
   components/     TurnView, Activity, FlightCardView (cards, options, expiry), PreferencesPanel
                   (form -> {changes, clear}, tested), Composer, Welcome
@@ -97,7 +103,7 @@ ui/src/
 
 ## Tests
 
-- `npm test` runs the reducer and preferences-form tests (vitest, 5 tests).
+- `npm test` runs the reducer and preferences-form tests (vitest, 7 tests).
 - `npm run build` type-checks.
 - Backend: `agent/tests/test_web.py` uses a fake agent and a fake MCP bridge. It covers streaming
   order, session reuse and reset, error hints, origin checks (WebSocket and REST), the preferences
