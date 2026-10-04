@@ -1,6 +1,7 @@
 """Provider interfaces + a shared cached/quota-aware HTTP helper."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Protocol
 
 import httpx
@@ -92,6 +93,7 @@ class CachedHTTP:
                 err = err.get("message") or err.get("code") or str(err)
             raise ProviderError(f"{self.provider}: {err}")
 
+        data["_fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         self.store.set(key, data, ttl)
         return data, False
 

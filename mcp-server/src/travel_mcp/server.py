@@ -8,6 +8,7 @@ Tools
   search_policies       baggage / fare-rule / refund / DGCA passages, with citations (RAG)
   list_policy_sources   what's indexed and when it was fetched
   get_travel_preferences / update_travel_preferences   your saved defaults
+  get_booking_options   sellers, fare types and redirect links for one itinerary (UI, on click)
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ from pydantic import Field
 from .cache import QuotaExceeded, Store
 from .config import Settings
 from .models import (
+    BookingOptions,
     PolicyPassage,
     PolicySearchResult,
     PolicySource,
@@ -166,6 +168,32 @@ def build_server(services: Services | None = None) -> MCPServer:
                 o, d, out.isoformat(), ret, adults, travel_class, nonstop_only,
                 max_price, codes, sort_by, limit,
             )
+        except EXPECTED as exc:
+            raise ToolError(str(exc)) from exc
+
+    @mcp.tool(annotations=READ_ONLY)
+    async def get_booking_options(
+        booking_token: Annotated[str, Field(min_length=10, description="booking_token from a search_flights itinerary")],
+        origin: Annotated[str, Field(description="Same origin as the search")],
+        destination: Annotated[str, Field(description="Same destination as the search")],
+        date: Annotated[str, Field(description="Same outbound date as the search, YYYY-MM-DD")],
+        return_date: Annotated[str | None, Field(description="Same return date, for round trips")] = None,
+    ) -> BookingOptions:
+        """Where to book one itinerary: sellers (airline direct first), fare types with prices, and
+        a redirect link (URL + form data) to the seller's page with the flight preselected.
+
+        Costs 1 of ~250 monthly searches. Meant to be called when the user asks to book, not for
+        every result. Links are short-lived (~10 minutes)."""
+        o = _airport(origin, "origin")
+        d = _airport(destination, "destination")
+        today = datetime.now(IST).date()
+        out = _date(date, "date", today)
+        ret = _date(return_date, "return_date", out).isoformat() if return_date else None
+        provider = svc.search
+        if not hasattr(provider, "booking_options"):
+            raise ToolError("the configured search provider doesn't support booking options")
+        try:
+            return await provider.booking_options(booking_token.strip(), o, d, out.isoformat(), ret)
         except EXPECTED as exc:
             raise ToolError(str(exc)) from exc
 

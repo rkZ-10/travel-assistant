@@ -8,7 +8,7 @@
 | AirLabs | 1,000/month, local stop at 900. **Free key expires 2026-10-30** | `get_api_usage`; AirLabs dashboard |
 | Claude (agent/evals) | Your plan's usage limits (or API billing if `ANTHROPIC_API_KEY` is set) | Claude settings / console |
 
-A trip request uses about 1 search. An eval run uses about 6 searches the first time each day,
+A trip request uses about 1 search. Each "See booking options" click uses 1 more. An eval run uses about 6 searches the first time each day,
 and 0 for re-runs that day.
 
 ## Refreshing policy sources

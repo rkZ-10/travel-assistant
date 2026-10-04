@@ -74,6 +74,31 @@ class SearchResult(BaseModel):
     source_url: str | None = Field(None, description="Open these results on Google Flights")
     cached: bool = False
     notes: list[str] = Field([], description="Caveats about these results; pass them on to the user")
+    fetched_at: str | None = Field(None, description="When these fares were fetched from Google (UTC)")
+    links_valid_minutes: int = Field(
+        30, description="Booking tokens from this search are treated as usable for this long after fetched_at"
+    )
+
+
+class BookingOption(BaseModel):
+    seller: str = Field(description="Who sells it, e.g. 'IndiGo' or a travel site")
+    is_airline: bool = Field(description="True when booking directly with the airline")
+    fare_name: str | None = Field(None, description="Fare type if given, e.g. 'Saver', 'Flexi Plus'")
+    price: int | None = None
+    leg: str = Field("together", description="'together', or 'departing'/'returning' for separate tickets")
+    flight_numbers: list[str] = []
+    features: list[str] = Field([], description="Fare features/restrictions as listed by the seller")
+    baggage: list[str] = []
+    booking_url: str | None = Field(None, description="Redirect endpoint; open by POSTing booking_post_data")
+    booking_post_data: str | None = None
+    booking_phone: str | None = None
+
+
+class BookingOptions(BaseModel):
+    options: list[BookingOption]
+    fetched_at: str | None = None
+    links_valid_minutes: int = Field(10, description="Redirect links are short-lived; open them soon")
+    notes: list[str] = []
 
 
 # ---------------------------------------------------------------- status ----

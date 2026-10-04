@@ -76,7 +76,8 @@ class RunTrace:
             texts = []
             for block in message.content:
                 if isinstance(block, ToolUseBlock):
-                    self.tool_calls.append(ToolCall(block.id, bare_name(block.name), dict(block.input)))
+                    name = bare_name(block.name).replace("mcp__ui__", "")
+                    self.tool_calls.append(ToolCall(block.id, name, dict(block.input)))
                 elif isinstance(block, TextBlock):
                     texts.append(block.text)
             if texts:  # keep the latest assistant text as the answer

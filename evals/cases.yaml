@@ -190,6 +190,22 @@ cases:
       answer_matches: ["(don.t|do not|couldn.t|could not|no)\\b[^.\\n]{0,40}(have|find|found|source|information|passages)|not (in|covered|available)|not [^.\\n]{0,40}(policy|page|source)|check(ing)? (the|their) (airline|website|site)"]
       grounded_amounts: true
 
+  # ------------------------------------------------------------------- web UI
+  - id: ui-flight-cards-from-search
+    tags: [ui, trip, guardrail]
+    ui: true
+    why: In the web UI the agent shows cards using booking_tokens copied from the search (unknown tokens are rejected), and never fetches booking links itself
+    prompt: "Cheapest nonstop Hyderabad to Chennai on {date+14}?"
+    checks:
+      tools_include: [search_flights, show_flight_cards]
+      tools_ok: [show_flight_cards]
+      tools_exclude: [get_booking_options]
+      tool_args:
+        - tool: show_flight_cards
+          args: {flights: {present: true}}
+      answer_not_matches: ["google\\.com/travel/clk"]
+      grounded_amounts: true
+
   # --------------------------------------------------------- status & guardrails
   - id: status-outside-window
     tags: [status, honesty]

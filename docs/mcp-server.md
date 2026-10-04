@@ -14,8 +14,11 @@ Python, MCP SDK **v2** (`from mcp.server.mcpserver import MCPServer`; v2 renamed
 | `list_policy_sources` | local | Sources, fetch dates, age, stale warnings |
 | `get_travel_preferences` | local | Saved defaults |
 | `update_travel_preferences` | local | Partial update, `clear` to reset, validated, change log kept |
+| `get_booking_options` | SerpApi (booking token) | Sellers (airline direct first), fare types with prices, and the redirect URL plus form data for one itinerary. Costs 1 search, so it's meant for user clicks. Links last about 10 min |
 
 All read tools are annotated `read_only_hint`. `update_travel_preferences` is the only write.
+Search results carry `fetched_at` (kept on cache hits) and `links_valid_minutes` (30), which the UI
+uses for expiry messaging. `scripts/probe_booking.py` shows what Google offers on a route (2 searches).
 
 ## Code map
 
@@ -68,6 +71,6 @@ plane). `collapse_codeshares` merges them into the operating flight's `marketed_
 
 ## Tests
 
-`uv run pytest` runs 62 offline tests using `httpx.MockTransport`. The fixtures include real
+`uv run pytest` runs 65 offline tests using `httpx.MockTransport`. The fixtures include real
 recorded SerpApi and AirLabs responses (keys and IP data scrubbed). `scripts/smoke_live.py
 [--record]` makes 2 real calls.

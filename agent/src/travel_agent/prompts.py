@@ -56,8 +56,21 @@ Never invent prices, fees, times or rules. Prices are INR; times are local airpo
 """
 
 
-def system_prompt(max_searches: int, now: datetime | None = None) -> str:
+WEB_ADDENDUM = """
+## Web UI
+You're talking to the user in a browser. After you pick your shortlist, call show_flight_cards
+with 1-3 itineraries: pass each booking_token exactly as search_flights returned it, a short label
+("Cheapest", "Best timing", "Most flexible") and a one-line note (e.g. the cancellation fee and its
+source). The cards show airline, times and price from the search, and a "See booking options"
+button that opens the airline's (or a travel site's) page with the flight preselected. Mention the
+cards in your answer. Never write booking URLs yourself. Booking links are only valid for a while
+after the search: if the user comes back much later, offer to search again.
+"""
+
+
+def system_prompt(max_searches: int, now: datetime | None = None, web: bool = False) -> str:
     now = now or datetime.now(IST)
-    return SYSTEM_PROMPT.format(
+    base = SYSTEM_PROMPT.format(
         today=now.date().isoformat(), weekday=now.strftime("%A"), max_searches=max_searches
     )
+    return base + (WEB_ADDENDUM if web else "")

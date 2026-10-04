@@ -10,10 +10,42 @@ export interface Step {
   detail?: string;
 }
 
+export interface Segment {
+  flight_number: string;
+  airline: string;
+  from_airport: string;
+  to_airport: string;
+  departs: string;
+  arrives: string;
+  duration_min: number;
+}
+
+export interface Itinerary {
+  price: number | null;
+  total_duration_min: number;
+  stops: number;
+  airlines: string[];
+  segments: Segment[];
+  notes?: string[];
+}
+
+export interface FlightCard {
+  booking_token: string;
+  label?: string | null;
+  note?: string | null;
+  itinerary: Itinerary;
+  search: { origin: string; destination: string; date: string; return_date?: string | null };
+  currency: string;
+  fetched_at?: string | null;
+  links_valid_minutes: number;
+  source_url?: string | null;
+}
+
 export interface Turn {
   id: number;
   user: string;
   steps: Step[];
+  cards?: FlightCard[];
   status: "working" | "done" | "error";
   answer?: string;
   error?: string;
@@ -35,6 +67,7 @@ export type ServerEvent =
   | { type: "tool_end"; id: string; tool: string; ok: boolean; duration_ms?: number | null; error?: string | null }
   | { type: "tool_blocked"; id: string; tool: string; label: string; reason: string }
   | { type: "answer"; text: string; turns?: number | null; cost_usd?: number | null; duration_ms?: number | null; tools: string[] }
+  | { type: "flight_cards"; cards: FlightCard[] }
   | { type: "error"; message: string };
 
 export type Action =
@@ -99,6 +132,8 @@ function applyEvent(state: ChatState, e: ServerEvent): ChatState {
         ...t,
         steps: [...t.steps, { id: e.id, label: e.label, status: "blocked", detail: e.reason }],
       }));
+    case "flight_cards":
+      return updateLast(state, (t) => ({ ...t, cards: [...(t.cards ?? []), ...e.cards] }));
     case "answer":
       return updateLast(state, (t) => ({
         ...t,

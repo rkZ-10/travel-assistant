@@ -13,6 +13,7 @@ from .activity import label
 from .config import bare_name
 from .guard import ToolGuard
 from .trace import ToolTimer
+from .ui_tools import SearchRegistry
 
 Event = dict[str, Any]
 EventSink = Callable[[Event], Any]  # sync or async
@@ -23,6 +24,7 @@ class AgentHooks:
         self.guard = guard
         self.timer = timer or ToolTimer()
         self.emit = emit
+        self.registry = SearchRegistry()
         self._tools: dict[str, str] = {}
 
     async def _send(self, event: Event) -> None:
@@ -34,7 +36,7 @@ class AgentHooks:
 
     async def pre(self, hook_input: dict, tool_use_id: str | None, ctx: Any) -> dict:
         out = await self.guard.hook(hook_input, tool_use_id, ctx)
-        tool = bare_name(hook_input.get("tool_name", ""))
+        tool = bare_name(hook_input.get("tool_name", "")).replace("mcp__ui__", "")
         args = hook_input.get("tool_input") or {}
         if out:  # denied
             reason = out["hookSpecificOutput"]["permissionDecisionReason"]
@@ -55,6 +57,8 @@ class AgentHooks:
         return {}
 
     async def post(self, hook_input: dict, tool_use_id: str | None, ctx: Any) -> dict:
+        if bare_name(hook_input.get("tool_name", "")) == "search_flights":
+            self.registry.record(hook_input.get("tool_input") or {}, hook_input.get("tool_response"))
         return await self._end(tool_use_id, True, ctx)
 
     async def post_failure(self, hook_input: dict, tool_use_id: str | None, ctx: Any) -> dict:

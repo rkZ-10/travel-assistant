@@ -41,4 +41,7 @@ def label(tool: str, args: dict[str, Any] | None) -> str:
         return "Listing policy sources"
     if tool == "get_api_usage":
         return "Checking API usage"
+    if tool == "show_flight_cards":
+        n = len(a.get("flights") or [])
+        return f"Showing {n} flight card{'s' if n != 1 else ''}"
     return tool.replace("_", " ").capitalize()

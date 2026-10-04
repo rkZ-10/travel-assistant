@@ -33,6 +33,14 @@ CLI). It reaches `travel-mcp` over MCP stdio and has no other tools.
 
 The guard runs before the permission check, so it can deny even auto-allowed tools.
 
+## Web mode (`ui_tools.py`)
+
+`TravelAgent(..., ui=True)` (which `travel-agent web` uses) adds an in-process MCP server `ui` with
+`show_flight_cards`, plus a prompt section on using it. The agent passes only `booking_token`s, a
+label and a note. The backend fills each card from the recorded search result and rejects unknown
+tokens. The guard's `AGENT_DENIED` list stops the agent calling `get_booking_options`: booking links
+are fetched only on a user click.
+
 ## Traces (`trace.py`)
 
 Every request writes `.data/agent_runs/<timestamp>.json` with:
@@ -71,5 +79,5 @@ MCP launch: the server's own `.venv` Python, falling back to `uv run`. Override 
 
 ## Tests
 
-`uv run pytest` runs 38 offline tests (guard, trace, timing, hooks/activity, config/options, CLI, web backend, evals).
+`uv run pytest` runs 48 offline tests (guard, trace, timing, hooks/activity, UI tools, config/options, CLI, web backend and bridge, evals).
 `tests/test_live.py` does one real end-to-end run when `TRAVEL_AGENT_LIVE=1`.

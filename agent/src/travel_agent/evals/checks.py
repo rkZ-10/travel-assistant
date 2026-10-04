@@ -109,6 +109,10 @@ def run_checks(checks: Checks, trace: RunTrace) -> list[CheckResult]:
         add(f"answer~/{rx}/", bool(re.search(rx, trace.answer, re.I | re.S)), "pattern not found in answer")
     for rx in checks.answer_not_matches:
         add(f"answer!~/{rx}/", not re.search(rx, trace.answer, re.I | re.S), "forbidden pattern found")
+    for t in checks.tools_ok:
+        calls = [c for c in trace.tool_calls if c.tool == t]
+        add(f"ok:{t}", bool(calls) and not any(c.is_error for c in calls),
+            f"calls: {[(c.is_error, c.result_preview[:80]) for c in calls]}")
     if checks.asks_question:
         add("asks_question", "?" in trace.answer and "search_flights" not in used,
             "no question asked, or searched without the missing info")

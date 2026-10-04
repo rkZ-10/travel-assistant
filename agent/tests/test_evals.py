@@ -142,3 +142,11 @@ def test_case_regexes_accept_real_phrasings():
     assert ok("prefs-budget-nothing-under", "The cheapest fare is ₹6,963, significantly over your ₹2,500 budget.")
     assert ok("policy-conflicting-sources-look-in", "not available where departure is within 7 (seven) days")
     assert ok("policy-uncovered-airline", "I found DGCA rules but not Air India Express's specific policy page.")
+
+
+def test_tools_ok_check():
+    t = trace("x", [("show_flight_cards", {"flights": []}, "Showed 1 card")])
+    assert all(r.passed for r in run_checks(Checks(tools_ok=["show_flight_cards"]), t))
+    t.tool_calls[0].is_error = True
+    assert not run_checks(Checks(tools_ok=["show_flight_cards"]), t)[1].passed
+    assert not run_checks(Checks(tools_ok=["show_flight_cards"]), trace("x"))[1].passed  # never called

@@ -9,8 +9,14 @@ Protocol (JSON messages)
                      {"type": "answer", "text", "turns", "cost_usd", "duration_ms", "tools"}
                      {"type": "error", "message"}
 
-Binds to 127.0.0.1 only and rejects WebSocket connections from other origins, so a random website
-can't drive the agent through your browser.
+REST (user actions that don't need the model; they go to travel-mcp over a direct MCP client)
+  GET  /api/preferences                 saved preferences
+  PUT  /api/preferences  {changes}      edit them directly (the user is acting, so no approval step)
+  POST /api/booking-options {booking_token, origin, destination, date, return_date}
+                                         sellers + redirect links for a card (costs 1 SerpApi search)
+
+Binds to 127.0.0.1 only and rejects requests and WebSocket connections from other origins, so a
+random website can't drive the agent or change settings through your browser.
 """
 from __future__ import annotations
 
@@ -19,12 +25,13 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Body, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import REPO_ROOT, AgentConfig
 from .guard import deny_all
+from .mcp_bridge import BridgeError, McpBridge
 from .runner import TravelAgent, is_transient_auth_error
 
 UI_DIST = REPO_ROOT / "ui" / "dist"
@@ -36,7 +43,7 @@ AgentFactory = Callable[[AgentConfig, Callable[[dict], Any]], Any]
 def default_factory(cfg: AgentConfig, on_event: Callable[[dict], Any]) -> TravelAgent:
     # Preference writes need approval; the UI has no approval dialog yet, so they're denied and
     # the agent tells the user to use `travel-agent chat` (which asks y/N).
-    return TravelAgent(cfg, approver=deny_all, on_event=on_event)
+    return TravelAgent(cfg, approver=deny_all, on_event=on_event, ui=True)
 
 
 class Session:
@@ -100,10 +107,55 @@ class Session:
 
 
 def create_app(cfg: AgentConfig | None = None, factory: AgentFactory = default_factory,
-               port: int = 8765, ui_dist: Path = UI_DIST) -> FastAPI:
+               port: int = 8765, ui_dist: Path = UI_DIST, bridge: Any = None) -> FastAPI:
     cfg = cfg or AgentConfig.load()
     allowed_origins = DEV_ORIGINS | {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
-    app = FastAPI(title="Travel Assistant", docs_url=None, redoc_url=None)
+    bridge = bridge if bridge is not None else McpBridge(cfg)
+    state: dict[str, Any] = {"bridge_error": None}
+
+    @contextlib.asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        try:
+            await bridge.start()
+        except Exception as exc:  # noqa: BLE001 - chat still works; panel/cards report it
+            state["bridge_error"] = f"Couldn't start travel-mcp for the panel and booking links: {exc}"
+        yield
+        with contextlib.suppress(Exception):
+            await bridge.stop()
+
+    app = FastAPI(title="Travel Assistant", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+    def check_origin(request: Request) -> None:
+        origin = request.headers.get("origin")
+        if origin and origin not in allowed_origins:
+            raise HTTPException(403, "Cross-origin requests are not allowed")
+
+    async def call(tool: str, args: dict) -> Any:
+        if state["bridge_error"]:
+            raise HTTPException(503, state["bridge_error"])
+        try:
+            return await bridge.call(tool, args)
+        except BridgeError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+    @app.get("/api/preferences")
+    async def get_preferences(request: Request) -> JSONResponse:
+        check_origin(request)
+        return JSONResponse(await call("get_travel_preferences", {}))
+
+    @app.put("/api/preferences")
+    async def put_preferences(request: Request, body: dict = Body(...)) -> JSONResponse:
+        check_origin(request)
+        return JSONResponse(await call("update_travel_preferences", {"changes": body.get("changes") or {}}))
+
+    @app.post("/api/booking-options")
+    async def booking_options(request: Request, body: dict = Body(...)) -> JSONResponse:
+        check_origin(request)
+        keys = ("booking_token", "origin", "destination", "date", "return_date")
+        args = {k: body.get(k) for k in keys if body.get(k)}
+        if not all(k in args for k in keys[:4]):
+            raise HTTPException(400, "booking_token, origin, destination and date are required")
+        return JSONResponse(await call("get_booking_options", args))
 
     @app.get("/api/health")
     async def health() -> JSONResponse:

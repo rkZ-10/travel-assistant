@@ -10,7 +10,7 @@ flowchart LR
     CD -- MCP stdio --> S
     AG -- MCP stdio --> S
     subgraph S[travel-mcp server]
-        T[8 tools] --> P1[GoogleFlightsProvider]
+        T[9 tools] --> P1[GoogleFlightsProvider]
         T --> P2[AirLabsStatusProvider]
         T --> RAG[PolicyIndex<br/>FTS5 + vectors]
         T --> PR[PreferenceStore]

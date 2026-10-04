@@ -38,3 +38,12 @@ describe("chat reducer", () => {
     expect(run([{ type: "user", text: "a" }, { type: "reset" }]).turns).toEqual([]);
   });
 });
+
+describe("flight cards", () => {
+  it("attaches cards to the working turn", () => {
+    const card = { booking_token: "tok", itinerary: { price: 7069, total_duration_min: 80, stops: 0, airlines: ["IndiGo"], segments: [] },
+      search: { origin: "HYD", destination: "MAA", date: "2026-10-17" }, currency: "INR", links_valid_minutes: 30 };
+    const s = run([{ type: "user", text: "q" }, ev({ type: "flight_cards", cards: [card] })]);
+    expect(s.turns[0].cards?.[0].booking_token).toBe("tok");
+  });
+});

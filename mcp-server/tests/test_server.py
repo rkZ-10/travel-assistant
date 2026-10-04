@@ -24,7 +24,7 @@ async def test_tools_listed(settings, store):
     assert set(tools) == {
         "search_flights", "get_flight_status", "get_route_departures", "get_api_usage",
         "search_policies", "list_policy_sources",
-        "get_travel_preferences", "update_travel_preferences",
+        "get_travel_preferences", "update_travel_preferences", "get_booking_options",
     }
     assert tools["update_travel_preferences"].annotations.read_only_hint is False
     assert tools["search_flights"].annotations.read_only_hint is True

@@ -14,6 +14,12 @@ from typing import Any
 
 from .config import TRAVEL_TOOLS, bare_name
 
+# Server tools the agent must not call, with the reason it's told.
+AGENT_DENIED = {
+    "get_booking_options": "Booking links are fetched by the UI only when the user clicks 'See booking options' "
+    "(each lookup costs quota). Use show_flight_cards to offer them.",
+}
+
 Approver = Callable[[str, dict[str, Any]], Awaitable[bool]]
 
 
@@ -31,6 +37,7 @@ class Decision:
 class ToolGuard:
     max_flight_searches: int = 4
     approver: Approver = deny_all
+    ui_tools: frozenset[str] = frozenset()  # e.g. {"mcp__ui__show_flight_cards"} in web mode
     searches: int = 0
     seen_searches: set[str] = field(default_factory=set)
     denied: list[dict[str, Any]] = field(default_factory=list)
@@ -41,7 +48,11 @@ class ToolGuard:
         self.seen_searches.clear()
 
     async def decide(self, tool_name: str, tool_input: dict[str, Any]) -> Decision:
+        if tool_name in self.ui_tools:
+            return Decision(True)
         tool = bare_name(tool_name)
+        if tool in AGENT_DENIED and tool_name != tool:
+            return self._deny(tool_name, AGENT_DENIED[tool])
         if tool not in TRAVEL_TOOLS or tool_name == tool:
             return self._deny(tool_name, "Only the travel tools are available to this assistant.")
 

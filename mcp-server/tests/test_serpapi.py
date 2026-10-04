@@ -72,3 +72,33 @@ async def test_no_max_price_no_notes(settings, store):
     svc = make_services(settings, store, Recorder(load(FIX)), Recorder({}))
     res = await svc.search.search("DEL", "BOM", "2026-10-16")
     assert res.notes == [] and res.total_found == 3
+
+
+async def test_booking_options_parsed_airline_first(settings, store):
+    serp = Recorder(load("serpapi_booking_options.synthetic.json"))
+    svc = make_services(settings, store, serp, Recorder({}))
+    res = await svc.search.booking_options("tok-6e243-abcdef", "HYD", "MAA", "2026-10-16")
+    p = serp.requests[0].url.params
+    assert p["booking_token"] == "tok-6e243-abcdef" and p["departure_id"] == "HYD" and p["type"] == "2"
+    assert [(o.seller, o.fare_name, o.price) for o in res.options] == [
+        ("IndiGo", "Saver", 7069), ("IndiGo", "Flexi Plus", 8410), ("MakeMyTrip", None, 7012)]
+    assert res.options[0].booking_post_data == "u=6e-saver-token" and res.fetched_at
+    assert res.notes == [] and res.links_valid_minutes == 10
+
+
+async def test_booking_options_empty_and_travel_sites_only(settings, store):
+    svc = make_services(settings, store, Recorder({"search_metadata": {}, "booking_options": []}), Recorder({}))
+    assert "no booking options" in (await svc.search.booking_options("tok-empty-123456", "HYD", "MAA", "2026-10-16")).notes[0]
+    data = load("serpapi_booking_options.synthetic.json")
+    data["booking_options"] = data["booking_options"][:1]
+    svc2 = make_services(settings, store, Recorder(data), Recorder({}))
+    res = await svc2.search.booking_options("tok-mmt-only-1234", "HYD", "MAA", "2026-10-16")
+    assert "No airline-direct" in res.notes[0]
+
+
+async def test_search_result_has_fetched_at_and_keeps_it_when_cached(settings, store):
+    svc = make_services(settings, store, Recorder(load(FIX)), Recorder({}))
+    first = await svc.search.search("DEL", "BOM", "2026-10-16")
+    again = await svc.search.search("DEL", "BOM", "2026-10-16")
+    assert first.fetched_at and again.cached and again.fetched_at == first.fetched_at
+    assert first.links_valid_minutes == 30

@@ -63,3 +63,23 @@ Most recent last. Each entry gives the context, the decision, and the consequenc
 ### 12. Deterministic evals with a grounding check; no LLM judge yet (2026-10-03)
 - Checks on tool calls, arguments, citations and ₹ amounts are free, repeatable and explainable.
 - An LLM judge can be added later for answer quality. It would cost usage on every run.
+
+### 13. Booking by redirecting to the seller, not a sandbox booking provider (2026-10-04)
+- Google Flights' booking options (via SerpApi `booking_token`) give each seller's fare types,
+  prices and a redirect that opens the seller's page with the flight preselected.
+- Real booking happens on the airline's site, so there's no payment handling or sandbox to build,
+  and the user always confirms there.
+- It costs 1 search per lookup, so it only happens on a user click. Tokens expire, so the UI
+  shows expiry countdowns (30 min for search results, 10 min for links).
+- The booking options also list real fare types (Saver vs Flexi Plus), which helps the agent stop
+  assuming the fare type.
+
+### 14. Preferences: a panel for direct edits, not per-change approval cards (2026-10-04)
+- Approving one agent-proposed change at a time is clunky for settings. A form shows everything
+  at once, and changes made by the user need no approval.
+- Conversation cards are kept for actions such as booking links.
+
+### 15. Cards are grounded by booking token (2026-10-04)
+- The agent selects and annotates. It can't state the price, times or links on a card.
+- The backend fills cards from the recorded search results and rejects unknown tokens. An eval
+  (`ui-flight-cards-from-search`) checks this.

@@ -60,6 +60,7 @@ class AgentConfig:
     runs_dir: Path = field(default_factory=lambda: REPO_ROOT / ".data" / "agent_runs")
     env: dict[str, str] = field(default_factory=dict)
     mcp_env: dict[str, str] = field(default_factory=dict)  # extra env for the travel-mcp process
+    ui: bool = False  # web-UI display tools (show_flight_cards); evals can turn it on per case
 
     @classmethod
     def load(cls, **overrides) -> "AgentConfig":

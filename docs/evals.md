@@ -6,7 +6,7 @@ like that into checks that run every time.
 
 ## How it works
 
-- **Cases** are in `evals/cases.yaml` (19 cases; 18 run by default). Each has a prompt, tags, a
+- **Cases** are in `evals/cases.yaml` (20 cases; 19 run by default). A case with `ui: true` runs the agent in web mode, with the card tool available. Each has a prompt, tags, a
   `why`, optional preferences, and checks.
 - **Isolation:** each case gets a temporary preferences directory (`TRAVEL_MCP_PREFS_DIR`), so your
   real preferences are never read or changed.
@@ -25,11 +25,12 @@ like that into checks that run every time.
 | `asks_question` | Guessing instead of clarifying |
 | `answer_matches / not_matches` | Wrong fee band, recommending an avoided airline, claiming a save that didn't happen |
 | `cites_policy_date` | Uncited policy claims |
+| `tools_ok` | A tool that must succeed, e.g. cards built from real booking tokens |
 | **`grounded_amounts`** | **Hallucinated money.** Every ₹ amount in the answer must appear in a tool output. The only exception is the sum or difference of two other grounded amounts quoted in the same answer ("₹230 more") |
 
 ## Coverage
 
-trip (4) · preferences (7) · RAG (6) · DGCA (2) · honesty (3) · guardrails (3) · status (1).
+trip (5) · preferences (7) · RAG (6) · DGCA (2) · honesty (3) · guardrails (4) · status (1) · ui (1).
 `policy-conflicting-sources-look-in` reproduces a real conflict found by hand (the 2019 DGCA rule says
 5 days, IndiGo's current page says 7). It passes on sonnet.
 
@@ -55,7 +56,7 @@ Output: `evals/results/<timestamp>-<model>/summary.md` (pass rate, results by ta
 table with failed checks, tools, turns, estimated cost), `results.json`, and full traces. Copy
 summaries worth keeping into `evals/baselines/`.
 
-**Usage:** a default run is 18 agent requests, with about 6 live searches on the first run of the
+**Usage:** a default run is 19 agent requests, with about 6 live searches on the first run of the
 day. On a Claude plan login it counts toward plan usage. The estimate is about $1 at API prices
 for sonnet.
 

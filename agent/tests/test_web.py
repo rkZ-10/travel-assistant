@@ -31,10 +31,38 @@ class FakeAgent:
         return t
 
 
+class FakeBridge:
+    def __init__(self, fail_start=False):
+        self.calls, self.fail_start = [], fail_start
+        self.prefs = {"home_airport": None}
+
+    async def start(self):
+        if self.fail_start:
+            raise RuntimeError("no venv")
+
+    async def stop(self):
+        pass
+
+    async def call(self, tool, args):
+        from travel_agent.mcp_bridge import BridgeError
+
+        self.calls.append((tool, args))
+        if tool == "get_travel_preferences":
+            return self.prefs
+        if tool == "update_travel_preferences":
+            if args["changes"].get("home_airport") == "Hyderabad":
+                raise BridgeError("home_airport must be a 3-letter IATA code")
+            self.prefs.update(args["changes"])
+            return {"preferences": self.prefs, "changed": {"home_airport": [None, "HYD"]}, "message": "updated"}
+        if tool == "get_booking_options":
+            return {"options": [{"seller": "IndiGo", "is_airline": True, "booking_url": "https://www.google.com/travel/clk/f",
+                                 "booking_post_data": "u=x"}], "links_valid_minutes": 10, "notes": []}
+
+
 @contextmanager
-def client(tmp_path, error=None):
+def client(tmp_path, error=None, bridge=None):
     app = create_app(AgentConfig(model="haiku"), factory=lambda cfg, ev: FakeAgent(cfg, ev, error),
-                     ui_dist=tmp_path / "missing")
+                     ui_dist=tmp_path / "missing", bridge=bridge or FakeBridge())
     with TestClient(app) as c:
         yield c
 
@@ -86,3 +114,43 @@ def test_health_and_unbuilt_ui(tmp_path):
     with client(tmp_path) as c:
         assert c.get("/api/health").json() == {"ok": True, "model": "haiku", "ui_built": False}
         assert "npm run build" in c.get("/").text
+
+
+def test_preferences_endpoints(tmp_path):
+    bridge = FakeBridge()
+    with client(tmp_path, bridge=bridge) as c:
+        assert c.get("/api/preferences").json() == {"home_airport": None}
+        r = c.put("/api/preferences", json={"changes": {"home_airport": "HYD"}})
+        assert r.status_code == 200 and r.json()["message"] == "updated"
+        bad = c.put("/api/preferences", json={"changes": {"home_airport": "Hyderabad"}})
+        assert bad.status_code == 400 and "IATA" in bad.json()["detail"]
+        evil = c.put("/api/preferences", json={"changes": {}}, headers={"origin": "https://evil.example"})
+        assert evil.status_code == 403
+    assert ("update_travel_preferences", {"changes": {"home_airport": "HYD"}}) in bridge.calls
+
+
+def test_booking_options_endpoint(tmp_path):
+    bridge = FakeBridge()
+    with client(tmp_path, bridge=bridge) as c:
+        body = {"booking_token": "tok-123456789", "origin": "HYD", "destination": "MAA", "date": "2026-10-17"}
+        r = c.post("/api/booking-options", json=body)
+        assert r.status_code == 200 and r.json()["options"][0]["seller"] == "IndiGo"
+        assert c.post("/api/booking-options", json={"origin": "HYD"}).status_code == 400
+    assert bridge.calls[-1] == ("get_booking_options", body)
+
+
+def test_bridge_start_failure_reported_but_chat_works(tmp_path):
+    with client(tmp_path, bridge=FakeBridge(fail_start=True)) as c:
+        r = c.get("/api/preferences")
+        assert r.status_code == 503 and "travel-mcp" in r.json()["detail"]
+        with c.websocket_connect("/ws") as ws:
+            assert ws.receive_json()["type"] == "ready"
+
+
+def test_friendly_validation_errors():
+    from travel_agent.mcp_bridge import friendly_error
+
+    raw = ("1 validation error for update_travel_preferencesArguments\nchanges.home_airport\n"
+           "  Value error, home_airport must be a 3-letter IATA code, got 'HYDERABAD' [type=value_error, input_value='x']")
+    assert friendly_error(raw, "update_travel_preferences") == "home_airport must be a 3-letter IATA code, got 'HYDERABAD'"
+    assert friendly_error("Error executing tool x: boom", "x") == "boom"

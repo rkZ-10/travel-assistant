@@ -1,0 +1,13 @@
+{
+  "_note": "SYNTHETIC: shape from SerpApi's Google Flights booking-options docs. Replace via scripts/probe_booking.py --record.",
+  "search_metadata": {"status": "Success"},
+  "booking_options": [
+    {"together": {"book_with": "MakeMyTrip", "airline": false, "marketed_as": ["6E 243"], "price": 7012,
+      "booking_request": {"url": "https://www.google.com/travel/clk/f", "post_data": "u=mmt-token"}}},
+    {"together": {"book_with": "IndiGo", "airline": true, "marketed_as": ["6E 243"], "price": 8410, "option_title": "Flexi Plus",
+      "extensions": ["Free seat selection", "Lower change fee"], "baggage_prices": ["1 free carry-on", "1st checked bag included"],
+      "booking_request": {"url": "https://www.google.com/travel/clk/f", "post_data": "u=6e-flexi-token"}}},
+    {"together": {"book_with": "IndiGo", "airline": true, "marketed_as": ["6E 243"], "price": 7069, "option_title": "Saver",
+      "booking_request": {"url": "https://www.google.com/travel/clk/f", "post_data": "u=6e-saver-token"}}}
+  ]
+}

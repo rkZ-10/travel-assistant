@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from typing import Any
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -13,14 +14,17 @@ from .guard import Approver, ToolGuard, deny_all
 from .hooks import AgentHooks, EventSink
 from .prompts import system_prompt
 from .trace import RunTrace
+from .ui_tools import UI_SERVER, UI_TOOLS, build_ui_server
 
 
-def build_options(cfg: AgentConfig, hooks: AgentHooks | ToolGuard) -> ClaudeAgentOptions:
+def build_options(cfg: AgentConfig, hooks: AgentHooks | ToolGuard, ui_server: Any = None) -> ClaudeAgentOptions:
+    """ui_server: in-process display tools for the web UI (see ui_tools.py); None for CLI/evals."""
     if isinstance(hooks, ToolGuard):
         hooks = AgentHooks(hooks)
     cmd = mcp_command()
+    ui_names = [f"mcp__{UI_SERVER}__{t}" for t in UI_TOOLS] if ui_server is not None else []
     return ClaudeAgentOptions(
-        system_prompt=system_prompt(cfg.max_flight_searches),
+        system_prompt=system_prompt(cfg.max_flight_searches, web=ui_server is not None),
         model=cfg.model,
         # No built-in tools (Bash, files, web): the agent can only use the travel server.
         tools=[],
@@ -32,11 +36,12 @@ def build_options(cfg: AgentConfig, hooks: AgentHooks | ToolGuard) -> ClaudeAgen
                 # Pass the full environment plus overrides, in case the CLI replaces rather than
                 # merges (Python on Windows won't start without SYSTEMROOT etc.).
                 **({"env": {**os.environ, **cfg.mcp_env}} if cfg.mcp_env else {}),
-            }
+            },
+            **({UI_SERVER: ui_server} if ui_server is not None else {}),
         },
         strict_mcp_config=True,  # ignore any MCP servers from the user's Claude config
         setting_sources=[],  # ...and their CLAUDE.md / settings
-        allowed_tools=[mcp_name(t) for t in TRAVEL_TOOLS],
+        allowed_tools=[mcp_name(t) for t in TRAVEL_TOOLS] + ui_names,
         # Guardrails run before the permission check and can still deny allowed tools.
         hooks={
             # One combined hook: guard decides first; only allowed calls are timed and reported.
@@ -54,15 +59,26 @@ def build_options(cfg: AgentConfig, hooks: AgentHooks | ToolGuard) -> ClaudeAgen
 class TravelAgent:
     """One conversation. `ask()` can be called repeatedly; context carries over."""
 
-    def __init__(self, cfg: AgentConfig, approver: Approver = deny_all, on_event: EventSink | None = None) -> None:
+    def __init__(
+        self, cfg: AgentConfig, approver: Approver = deny_all, on_event: EventSink | None = None,
+        ui: bool | None = None,
+    ) -> None:
         self.cfg = cfg
-        self.guard = ToolGuard(cfg.max_flight_searches, approver)
+        ui = cfg.ui if ui is None else ui
+        ui_names = frozenset(f"mcp__{UI_SERVER}__{t}" for t in UI_TOOLS) if ui else frozenset()
+        self.guard = ToolGuard(cfg.max_flight_searches, approver, ui_tools=ui_names)
         self.hooks = AgentHooks(self.guard, emit=on_event)
         self.timer = self.hooks.timer
+        self.ui_server = None
+        if ui:
+            async def _emit(event: dict) -> None:
+                await self.hooks._send(event)
+
+            self.ui_server, _ = build_ui_server(self.hooks.registry, _emit)
         self._client: ClaudeSDKClient | None = None
 
     async def __aenter__(self) -> "TravelAgent":
-        self._client = ClaudeSDKClient(options=build_options(self.cfg, self.hooks))
+        self._client = ClaudeSDKClient(options=build_options(self.cfg, self.hooks, self.ui_server))
         await self._client.connect()
         return self
 

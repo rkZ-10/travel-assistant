@@ -33,7 +33,8 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 | `src/travel_mcp/rag/index.py` | `PolicyIndex`: FTS5 + fastembed vectors + RRF; `FastEmbedder` |
 | `src/travel_mcp/rag/cli.py` | `travel-rag ingest / query / sources` |
 | `scripts/smoke_live.py` | 2 real API calls; `--record` saves scrubbed fixtures |
-| `tests/` | 62 offline tests (`httpx.MockTransport`, recorded and synthetic fixtures, fake embedder) |
+| `scripts/probe_booking.py` | Shows Google's booking sellers for a route (2 searches); `--record` |
+| `tests/` | 65 offline tests (`httpx.MockTransport`, recorded and synthetic fixtures, fake embedder) |
 
 ## `rag/`: policy sources
 
@@ -56,14 +57,16 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 | `src/travel_agent/activity.py` | Human-readable tool labels ("Searching flights HYD → MAA…") |
 | `src/travel_agent/trace.py` | `RunTrace` and `ToolCall`: a per-run record saved as JSON; `ToolTimer` |
 | `src/travel_agent/runner.py` | `build_options`, `TravelAgent` session, `ask_once` with OAuth-race retry |
-| `src/travel_agent/web.py` | FastAPI WebSocket backend for the UI (`travel-agent web`) |
+| `src/travel_agent/web.py` | FastAPI backend for the UI: WebSocket chat plus REST for preferences and booking options |
+| `src/travel_agent/ui_tools.py` | Web-mode display tool `show_flight_cards`; `SearchRegistry` that grounds cards in search results |
+| `src/travel_agent/mcp_bridge.py` | Direct MCP client to travel-mcp for UI actions; friendly validation errors |
 | `src/travel_agent/cli.py` | `travel-agent ask / chat / web` |
 | `src/travel_agent/evals/cases.py` | Case schema and date placeholders |
 | `src/travel_agent/evals/checks.py` | Deterministic checks, including `grounded_amounts` |
 | `src/travel_agent/evals/runner.py` | Runs cases with isolated preferences and pinned search cache; `rescore` |
 | `src/travel_agent/evals/report.py` | Markdown and JSON reports |
 | `src/travel_agent/evals/cli.py` | `travel-eval` |
-| `tests/` | 38 offline tests, plus `test_live.py` (opt-in, real end-to-end) |
+| `tests/` | 48 offline tests, plus `test_live.py` (opt-in, real end-to-end) |
 
 ## `ui/`: React chat UI
 
@@ -72,16 +75,19 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 | `package.json`, `package-lock.json` | Scripts (`dev`, `build`, `test`) and pinned npm dependencies |
 | `vite.config.ts` | React and Tailwind plugins; dev proxy `/ws` and `/api` → `:8765` |
 | `tsconfig.json`, `index.html` | TypeScript config and HTML entry |
-| `src/state.ts` (+ `state.test.ts`) | Pure reducer from server events to the chat state (vitest) |
+| `src/state.ts` (+ `state.test.ts`) | Pure reducer from server events to the chat state, including cards (vitest) |
+| `src/api.ts` | REST calls; `openBooking()` POSTs the seller redirect in a new tab |
+| `src/time.ts` | Expiry countdown hook and formatting helpers |
+| `src/prefs.test.ts` | Preferences form → `{changes, clear}` mapping test |
 | `src/useAgent.ts` | WebSocket lifecycle and reconnect |
-| `src/App.tsx`, `src/components/*` | Layout, turns, live activity, composer, welcome screen |
+| `src/App.tsx`, `src/components/*` | Layout, turns, live activity, flight cards (`FlightCardView`), preferences panel (`PreferencesPanel`), composer, welcome screen |
 | `src/index.css` | Tailwind import, typography plugin, table styles |
 
 ## `evals/`
 
 | Path | Purpose |
 |---|---|
-| `cases.yaml` | The 19 eval cases (18 run by default) |
+| `cases.yaml` | The 20 eval cases (19 run by default) |
 | `README.md` | How to run |
 | `baselines/` | Committed summaries per run and `README.md` with findings and history |
 

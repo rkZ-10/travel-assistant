@@ -61,6 +61,7 @@ async def run_case(case: Case, cfg: AgentConfig, out_dir: Path, attempt: int = 1
             (Path(prefs_dir) / "preferences.json").write_text(json.dumps(case.preferences), encoding="utf-8")
         cfg.mcp_env = {"TRAVEL_MCP_PREFS_DIR": prefs_dir, "TRAVEL_MCP_SEARCH_TTL": str(PINNED_SEARCH_TTL)}
         cfg.runs_dir = out_dir / "traces" / f"{case.id}-{attempt}"
+        cfg.ui = case.ui
         approver = approve_all if case.approve_preference_writes else deny_all
         try:
             trace = await ask_once(case.prompt, cfg, approver)

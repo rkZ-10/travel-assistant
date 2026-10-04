@@ -7,6 +7,8 @@ from __future__ import annotations
 from typing import Any
 
 from ..models import (
+    BookingOption,
+    BookingOptions,
     Itinerary,
     Layover,
     PriceInsights,
@@ -30,6 +32,9 @@ _SORT = {
     SortBy.arrival: 4,
     SortBy.duration: 5,
 }
+
+
+BOOKING_TTL = 10 * 60  # redirect links are short-lived
 
 
 class GoogleFlightsProvider:
@@ -104,6 +109,35 @@ class GoogleFlightsProvider:
             cached=cached,
             max_price=max_price,
         )
+
+
+    async def booking_options(
+        self, booking_token: str, origin: str, destination: str, date: str, return_date: str | None = None
+    ) -> BookingOptions:
+        """Sellers, fare types and redirect links for one itinerary. Costs 1 search: call only
+        when the user asks to book."""
+        if not self._key:
+            raise NotConfigured("SERPAPI_KEY is not set in .env")
+        params = _search_params_for_booking(
+            origin, destination, date, return_date, self._currency, self._country, self._language
+        )
+        params["booking_token"] = booking_token
+        params["api_key"] = self._key
+        data, _ = await self._http.get_json("/search.json", params, BOOKING_TTL)
+        return parse_booking_options(data)
+
+
+def _search_params_for_booking(
+    origin: str, destination: str, date: str, return_date: str | None, currency: str, country: str, language: str
+) -> dict[str, Any]:
+    params: dict[str, Any] = {
+        "engine": "google_flights", "departure_id": origin, "arrival_id": destination,
+        "outbound_date": date, "type": 1 if return_date else 2,
+        "currency": currency, "gl": country, "hl": language,
+    }
+    if return_date:
+        params["return_date"] = return_date
+    return params
 
 
 def _segment(raw: dict[str, Any]) -> Segment:
@@ -206,4 +240,41 @@ def parse_search(
         source_url=(data.get("search_metadata") or {}).get("google_flights_url"),
         cached=cached,
         notes=notes,
+        fetched_at=data.get("_fetched_at"),
     )
+
+
+def _booking_option(raw: dict[str, Any], leg: str) -> BookingOption:
+    req = raw.get("booking_request") or {}
+    bags = raw.get("baggage_prices") or []
+    return BookingOption(
+        seller=raw.get("book_with") or "Unknown seller",
+        is_airline=bool(raw.get("airline")),
+        fare_name=raw.get("option_title"),
+        price=raw.get("price"),
+        leg=leg,
+        flight_numbers=list(raw.get("marketed_as") or []),
+        features=list(raw.get("extensions") or [])[:6],
+        baggage=[str(b) for b in bags][:4] if isinstance(bags, list) else [],
+        booking_url=req.get("url"),
+        booking_post_data=req.get("post_data"),
+        booking_phone=raw.get("booking_phone"),
+    )
+
+
+def parse_booking_options(data: dict[str, Any]) -> BookingOptions:
+    options: list[BookingOption] = []
+    for item in data.get("booking_options") or []:
+        if "together" in item:
+            options.append(_booking_option(item["together"], "together"))
+        for leg in ("departing", "returning"):
+            if leg in item:
+                options.append(_booking_option(item[leg], leg))
+    # Airline-direct first, then cheapest.
+    options.sort(key=lambda o: (not o.is_airline, o.price if o.price is not None else 10**9))
+    notes = []
+    if not options:
+        notes.append("Google returned no booking options for this flight; use the Google Flights link instead.")
+    elif not any(o.is_airline for o in options):
+        notes.append("No airline-direct option was offered for this flight; only travel sites.")
+    return BookingOptions(options=options, fetched_at=data.get("_fetched_at"), notes=notes)

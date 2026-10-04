@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Turn } from "../state";
 import { Activity } from "./Activity";
+import { FlightCardView } from "./FlightCardView";
 
 function Meta({ meta }: { meta: NonNullable<Turn["meta"]> }) {
   const parts = [
@@ -13,7 +14,7 @@ function Meta({ meta }: { meta: NonNullable<Turn["meta"]> }) {
   return <div className="mt-3 font-mono text-xs text-stone-400">{parts.join(" · ")}</div>;
 }
 
-export function TurnView({ turn }: { turn: Turn }) {
+export function TurnView({ turn, onSend }: { turn: Turn; onSend: (text: string) => void }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
@@ -31,6 +32,13 @@ export function TurnView({ turn }: { turn: Turn }) {
             >
               {turn.answer}
             </ReactMarkdown>
+          </div>
+        )}
+        {turn.cards && turn.cards.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {turn.cards.map((c) => (
+              <FlightCardView key={c.booking_token} card={c} onSearchAgain={onSend} />
+            ))}
           </div>
         )}
         {turn.error && (

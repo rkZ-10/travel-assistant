@@ -9,6 +9,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "pydantic>=2.10",
     "pyyaml>=6",
+    "mcp>=2.2,<3",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
 ]

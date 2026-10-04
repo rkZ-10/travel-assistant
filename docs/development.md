@@ -15,11 +15,11 @@
 
 | Component | Command | Count |
 |---|---|---|
-| MCP server + RAG | `cd mcp-server; python -m uv run pytest` | 62 |
-| Agent, web backend, evals framework | `cd agent; python -m uv run pytest` | 38 (+1 live) |
-| UI | `cd ui; npm test` and `npm run build` (type-check) | 3 |
+| MCP server + RAG | `cd mcp-server; python -m uv run pytest` | 65 |
+| Agent, web backend, evals framework | `cd agent; python -m uv run pytest` | 48 (+1 live) |
+| UI | `cd ui; npm test` and `npm run build` (type-check) | 5 |
 | End-to-end (live) | `$env:TRAVEL_AGENT_LIVE=1; python -m uv run pytest tests/test_live.py -s` | 1 |
-| Agent behaviour | `python -m uv run travel-eval` | 18 cases |
+| Agent behaviour | `python -m uv run travel-eval` | 19 cases |
 
 ## Conventions
 

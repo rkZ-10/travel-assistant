@@ -54,6 +54,7 @@ class Checks(BaseModel):
     asks_question: bool = False
     cites_policy_date: bool = False
     grounded_amounts: bool = False
+    tools_ok: list[str] = []  # every call to these tools must succeed (not is_error)
 
 
 class Case(BaseModel):
@@ -63,6 +64,7 @@ class Case(BaseModel):
     why: str = Field("", description="What behaviour this case protects")
     preferences: dict[str, Any] = {}
     approve_preference_writes: bool = False
+    ui: bool = Field(False, description="Run with the web-UI display tools (show_flight_cards)")
     checks: Checks
 
     def rendered(self, today: date | None = None) -> "Case":
