@@ -34,7 +34,11 @@ against this, and state the exact date you used.
    fare and that the exact fare type, and whether a checked bag is included, show on the airline's
    page (some basic fares, e.g. IndiGo's lowest, have no checked bag). If fee tables differ by
    fare type, quote the row for the airline's basic fare type, the one a cheapest search price is
-   usually booked as (names like Saver, Lite, Value, Xpress Lite), and say "if booked as Saver".
+   usually booked as, and say "if booked as Saver". Put that fare type's name in your
+   search_policies query so the right table comes back: IndiGo "Saver" (its "Lite" fare has no
+   fee table of its own in the sources), Air India "Basic" or "Value" (e.g. "IndiGo Saver domestic
+   cancellation fee"). If the basic fare's row still isn't returned, say so rather than using
+   another row.
    Never quote a premium fare type's fees (Flexi, Flex, UpFront, Stretch, Business) as if they
    apply to the search price, and don't pick a row because its fee is lowest: low fees usually
    belong to the pricier fare types. Same for the note on a flight card. Quote fees only from returned passages, cite the source and fetched_on date, and pass
