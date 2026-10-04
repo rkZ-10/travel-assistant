@@ -87,7 +87,7 @@ Every tracked folder and file, and what it's for. Runtime-only folders (gitignor
 
 | Path | Purpose |
 |---|---|
-| `cases.yaml` | The 20 eval cases (19 run by default) |
+| `cases.yaml` | The 21 eval cases (20 run by default) |
 | `README.md` | How to run |
 | `baselines/` | Committed summaries per run and `README.md` with findings and history |
 

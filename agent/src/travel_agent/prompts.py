@@ -33,7 +33,11 @@ against this, and state the exact date you used.
    its price is. Don't name one (no "assuming Saver"): say the price is for the airline's basic
    fare and that the exact fare type, and whether a checked bag is included, show on the airline's
    page (some basic fares, e.g. IndiGo's lowest, have no checked bag). If fee tables differ by
-   fare type, quote the cheapest fare type's row and say so. Quote fees only from returned passages, cite the source and fetched_on date, and pass
+   fare type, quote the row for the airline's basic fare type, the one a cheapest search price is
+   usually booked as (names like Saver, Lite, Value, Xpress Lite), and say "if booked as Saver".
+   Never quote a premium fare type's fees (Flexi, Flex, UpFront, Stretch, Business) as if they
+   apply to the search price, and don't pick a row because its fee is lowest: low fees usually
+   belong to the pricier fare types. Same for the note on a flight card. Quote fees only from returned passages, cite the source and fetched_on date, and pass
    on any stale_warning or note. If the passages don't cover something, say so.
    REQUIRED when the user asks about cancelling, refunds or changes: make a separate
    search_policies call with airlines=["DGCA"] (e.g. "DGCA refund taxes cancellation charge cap

@@ -6,6 +6,29 @@ suite. It's built with **MCP**, **RAG**, the **Claude Agent SDK** and determinis
 
 📚 **Docs:** [docs/README.md](docs/README.md): architecture, design decisions, setup, operations.
 
+## See it in action
+
+A real run in the web UI: "Cheapest non-stop flight to Chennai on Oct 14", with saved preferences
+(home HYD, nonstop, 05:00–10:00, prefers IndiGo).
+
+**1. Live tool activity, preferences applied, shortlist and fare rules with sources**
+
+![Chat answer](docs/images/chat-answer.png)
+
+**2. Flight cards filled from the real search result, with fare expiry**
+
+![Flight cards](docs/images/chat-cards.png)
+
+**3. "See booking options": airline direct first, then travel sites, with link expiry**
+
+![Booking options](docs/images/booking-options.png)
+
+**4. "Book on IndiGo" opens the airline's page with 6E 243 already selected**
+
+![IndiGo booking page](docs/images/airline-redirect.png)
+
+Booking and payment happen on the seller's site. The assistant never books or pays.
+
 ## Components
 
 | Folder | What it does | Backed by |
@@ -14,7 +37,7 @@ suite. It's built with **MCP**, **RAG**, the **Claude Agent SDK** and determinis
 | [`rag/`](rag/README.md) | Official IndiGo, Air India, Akasa and DGCA pages → hybrid retrieval with citations and freshness checks | SQLite FTS5 + local bge-small embeddings (RRF) |
 | [`agent/`](agent/README.md) | Trip planner: preferences → search → fare rules and DGCA rights → cited recommendation, with guardrails enforced in code | Claude Agent SDK |
 | [`ui/`](docs/ui.md) | Browser chat with live tool activity, flight cards with **"Book on IndiGo ↗"** redirects and expiry countdowns, and a preferences panel | React + Vite + Tailwind, FastAPI |
-| [`evals/`](evals/README.md) | 20 cases scoring tool use, arguments, citations, and whether every ₹ amount came from a tool | Real agent runs + deterministic checks |
+| [`evals/`](evals/README.md) | 21 cases scoring tool use, arguments, citations, and whether every ₹ amount came from a tool | Real agent runs + deterministic checks |
 
 ## Quick start (Windows)
 

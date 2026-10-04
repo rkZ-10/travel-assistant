@@ -163,6 +163,18 @@ cases:
       answer_not_matches: ["5,?999"]
       grounded_amounts: true
 
+  - id: policy-basic-fare-row
+    tags: [rag]
+    why: >-
+      Real web run quoted IndiGo UpFront's ₹999 fee as "the cheapest fare type" for a Google Flights
+      price. The search price is a basic fare, so the Saver row applies.
+    prompt: "I'm booking the cheapest IndiGo fare I found on Google Flights. What will it cost to cancel 5 days before departure?"
+    checks:
+      tools_include: [search_policies]
+      answer_matches: ["4,?299"]
+      answer_not_matches: ["cheapest fare type[^.]*UpFront", "UpFront[^.]*cheapest"]
+      grounded_amounts: true
+
   - id: policy-dgca-denied-boarding
     tags: [rag, dgca]
     why: Passenger-rights question answered from DGCA CAR M-IV
