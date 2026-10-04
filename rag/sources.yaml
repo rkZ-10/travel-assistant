@@ -83,6 +83,7 @@ sources:
     airline: SG
     title: SpiceJet — Terms of carriage (change and cancellation fees, baggage)
     url: https://corporate.spicejet.com/Tnc.aspx
+    file: manual/spicejet-terms.html  # automated fetch returns an empty page; saved from a browser
     topics: [cancellation, change, fees, baggage, refund]
 
   - id: allianceair-tariff
@@ -90,6 +91,9 @@ sources:
     title: Alliance Air — Domestic tariff sheet (fare rules, effective 1 Sep 2025)
     url: https://plone.allianceair.in/allianceair/en/assets/tariff-sheet/alliance-air-domestic-tariff-sheet_01sep25.pdf
     topics: [fares, cancellation, change, refund]
+    note: >-
+      This PDF has two change/cancellation tables. The one "effective 01st August 2025" is current;
+      the "15th April 2022 till 31st Jul 2025" table is history.
 
   - id: allianceair-faq
     airline: 9I

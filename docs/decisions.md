@@ -34,7 +34,7 @@ Most recent last. Each entry gives the context, the decision, and the consequenc
 - Spoofing headers would get around the airlines' deliberate bot filtering, and the code will be public.
 - Same spirit for robots.txt (added 2026-10-04): `ingest` checks it and won't fetch a URL the site
   disallows for bots, e.g. Air India Express's fee PDF. Those are saved from a browser instead.
-- We keep an honest User-Agent. Those pages (8 now, with Air India Express) are saved by hand: a couple of minutes, a few times a year.
+- We keep an honest User-Agent. Those pages (9 now, with Air India Express and SpiceJet) are saved by hand: a couple of minutes, a few times a year.
 - Staleness warnings and block-page detection keep this safe.
 
 ### 7. Local hybrid retrieval: FTS5 + bge-small + RRF in SQLite (2026-10-01)

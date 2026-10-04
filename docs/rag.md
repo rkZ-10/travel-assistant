@@ -12,8 +12,8 @@ capture dates.
 | Air India (AI) | Smart Fares, Baggage FAQ | Saved by hand (same reason) |
 | Akasa (QP) | Baggage, FAQ | Fetched automatically |
 | Air India Express (IX) | Fees & charges (mandatory-disclosure PDF), Baggage FAQ | Saved by hand: robots.txt disallows bots on its documents, and the FAQ is rendered by JavaScript |
-| SpiceJet (SG) | Terms of carriage (change/cancellation fee table, baggage) | Fetched automatically |
-| Alliance Air (9I) | Domestic tariff sheet (fare rules, effective 1 Sep 2025), FAQs (Aug 2025) | Fetched automatically (PDF) |
+| SpiceJet (SG) | Terms of carriage (change/cancellation fee table, baggage) | Saved by hand: an automated fetch gets an empty page |
+| Alliance Air (9I) | Domestic tariff sheet (fare rules, effective 1 Sep 2025), FAQs (Aug 2025) | Fetched automatically (PDF). The tariff sheet has an old and a current (1 Aug 2025) fee table; its `note:` says which is current |
 | DGCA | CAR M-IV (denied boarding/cancellation/delay, Rev 4 2023), CAR M-II (refunds, 2019 revision; **superseded** by the 26 Mar 2026 revision) | Fetched automatically (PDF) |
 
 Not covered (the agent says so instead of guessing): Star Air, Fly91.

@@ -8,7 +8,8 @@ Inputs for the `search_policies` MCP tool. The code is in
   and Air India don't answer non-browser clients, so their sources have both `url:` (cited) and
   `file:` (indexed). Open each URL in a browser, save it with Ctrl+S as "Webpage, HTML only" under
   the `file:` name, then run `ingest`. Re-save a page to refresh it; `ingest` picks up newer files.
-  Air India Express is saved by hand too: download its fees PDF from the browser, and save its
+  SpiceJet's terms page is saved by hand too ("HTML only"; if ingest says it's empty, use "Webpage,
+  Complete"). Air India Express: download its fees PDF from the browser, and save its
   baggage FAQ as "Webpage, Complete" (the page is built by JavaScript, so "HTML only" would be an
   empty shell). `ingest` also honours robots.txt, and a URL a site disallows for bots must be
   saved this way.

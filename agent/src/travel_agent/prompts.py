@@ -36,8 +36,8 @@ against this, and state the exact date you used.
    fare type, quote the row for the airline's basic fare type, the one a cheapest search price is
    usually booked as, and say "if booked as Saver". Put that fare type's name in your
    search_policies query so the right table comes back: IndiGo "Saver" (its "Lite" fare has no
-   fee table of its own in the sources), Air India "Basic" or "Value", Air India Express "Xpress
-   Lite" or "Xpress Value", Alliance Air "Super Saver" (e.g. "IndiGo Saver domestic cancellation
+   fee table of its own in the sources), Air India "Basic" or "Value", Air India Express "Value"
+   (its "Lite" fare is cheaper but has no checked bag), Alliance Air "Super Saver" (e.g. "IndiGo Saver domestic cancellation
    fee"). SpiceJet's terms list one fee table for all fares. If the basic fare's row still isn't returned, say so rather than using
    another row.
    Never quote a premium fare type's fees (Flexi, Flex, UpFront, Stretch, Business) as if they

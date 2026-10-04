@@ -18,7 +18,7 @@ server design, RAG, agent construction and evals. Full docs are in `docs/` (star
 - [x] Web UI Claude access: detects local Claude login, else bring-your-own API key (auth.py, Auth.tsx); key-only mode
 - [ ] Host travel-mcp as a remote Claude connector so others use it on their own subscription ("option 1")
 - [ ] Run scripts/probe_booking.py to confirm airline-direct sellers; use booking fare types in answers
-- [x] IX/SG/9I policy sources (IX = manual saves: robots.txt + JS pages); ingest honours robots.txt
+- [x] IX/SG/9I policy sources (IX + SpiceJet = manual saves: robots.txt / JS / empty fetch); ingest honours robots.txt
 - [ ] 2026 DGCA refund CAR (manual PDF); Star Air / Fly91 sources
 - [ ] Booking via sandbox BookingProvider (no bookable API for individuals in India)
 
