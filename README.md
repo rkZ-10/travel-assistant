@@ -67,7 +67,7 @@ Full setup, including saving the bot-blocked airline pages and connecting Claude
 - [x] RAG: airline and DGCA policy search with citations (hybrid BM25 + vectors)
 - [x] Saved travel preferences (read/update via MCP, approval-gated writes)
 - [x] Agent: Claude Agent SDK planner with guardrails and run traces
-- [x] Evals: 23 deterministic cases including ₹ grounding. **Latest: sonnet 22/22** (2026-10-04) ([details](evals/baselines/README.md))
+- [x] Evals: 23 deterministic cases including ₹ grounding. **Latest: sonnet 23/23** incl. the quota-heavy case (2026-10-04) ([details](evals/baselines/README.md))
 - [x] React chat UI with live tool activity
 - [x] Flight cards that redirect to the seller's booking page; preferences panel
 - [x] Web UI runs on your Claude login when it finds one, otherwise on your own Anthropic API key
