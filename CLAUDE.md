@@ -11,7 +11,7 @@ server design, RAG, agent construction and evals. Full docs are in `docs/` (star
 - [x] RAG: airline + DGCA policies, hybrid retrieval, freshness and block-page checks
 - [x] Preferences: get/update tools, approval-gated writes
 - [x] Agent: Claude Agent SDK planner with code-enforced guardrails and traces
-- [x] Evals: 23 cases, deterministic checks incl. ₹ grounding. Latest 2026-10-03b: sonnet 18/18, haiku 15/18 (evals/baselines/README.md)
+- [x] Evals: 23 cases, deterministic checks incl. ₹ grounding. Latest 2026-10-04: sonnet 22/22 (haiku last measured 15/18 on 2026-10-03b) (evals/baselines/README.md)
 - [x] Post-baseline fixes: prompt hardening (prefs line, required DGCA call, exact arithmetic), max_price drops unpriced/over-budget + notes. Re-run done (sonnet 18/18)
 - [x] React chat UI (ui/) + FastAPI WebSocket backend (travel-agent web) with live tool activity
 - [x] Preferences panel (direct edit via REST → MCP bridge); flight cards grounded in search results (by flight number or booking_token), booking redirect to seller (get_booking_options on click only), expiry countdowns

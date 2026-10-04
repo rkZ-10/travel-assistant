@@ -6,6 +6,7 @@
 | 2026-10-03 | haiku | 14/17 | ~$0.34 | Practice model. Real misses listed below |
 | 2026-10-03b | sonnet | **18/18** | ~$0.61 | After the findings fixes: prompt v2, server max_price handling, new budget case |
 | 2026-10-03b | haiku | 15/18 | ~$0.29 | Showed 11/18 until 4 over-strict checks were fixed. Its misses moved to different cases: see below |
+| 2026-10-04 | sonnet | **22/22** | ~$0.84 | After the web UI, basic-fare and flight-number fixes, and new IX/SpiceJet/Alliance Air sources (4 new cases) |
 
 ## 2026-10-03 findings
 
