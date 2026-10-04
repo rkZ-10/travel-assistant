@@ -16,7 +16,8 @@ browser (React) ──WebSocket /ws──> travel-agent web (FastAPI, 127.0.0.1:
 - **Flight cards** for the agent's shortlist (1–3), each with a "See booking options" button.
   Clicking it lists the sellers (airline direct first), fare types such as Saver and Flexi Plus with
   prices, and **"Book on IndiGo ↗"** buttons. Those open the seller's page with the flight
-  preselected, the same redirect Google Flights uses. Payment happens on the seller's site.
+  preselected, the same redirect Google Flights uses. Payment happens on the seller's site. A popular
+  route can return 20+ sellers, so the first 5 show and the rest sit behind "Show N more sellers".
 - **Expiry messaging** on every card: "Fares valid for about 24 more min (fetched 10:42)". Booking
   links get their own, shorter countdown (about 10 minutes). Once a card expires, its buttons are
   disabled and it offers **Search again**, and expired booking links offer **Refresh options**.
@@ -38,7 +39,9 @@ and Claude Desktop because they're stored in the same file.
    `booking_token`s, a label and a note. It never passes prices or times.
 2. The backend looks each token up among this conversation's real `search_flights` results, which
    the PostToolUse hook records, and fills in the airline, times, price and fetch time from there.
-   Unknown tokens are rejected and the agent is told why.
+   Unknown tokens are rejected and the agent is told why. If the agent shows the same itinerary
+   twice, the reducer replaces the earlier card instead of adding a duplicate. Cards render below
+   the answer text, and the prompt tells the agent to say "the cards below".
 3. Booking links are **not** fetched by the agent: `get_booking_options` is on its deny list. They're
    fetched only when you click, via `POST /api/booking-options`, which costs 1 SerpApi search.
 

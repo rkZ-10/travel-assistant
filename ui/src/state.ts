@@ -133,7 +133,16 @@ function applyEvent(state: ChatState, e: ServerEvent): ChatState {
         steps: [...t.steps, { id: e.id, label: e.label, status: "blocked", detail: e.reason }],
       }));
     case "flight_cards":
-      return updateLast(state, (t) => ({ ...t, cards: [...(t.cards ?? []), ...e.cards] }));
+      // A later call for the same itinerary replaces the earlier card (keeps its position).
+      return updateLast(state, (t) => {
+        const cards = [...(t.cards ?? [])];
+        for (const c of e.cards) {
+          const i = cards.findIndex((x) => x.booking_token === c.booking_token);
+          if (i >= 0) cards[i] = c;
+          else cards.push(c);
+        }
+        return { ...t, cards };
+      });
     case "answer":
       return updateLast(state, (t) => ({
         ...t,

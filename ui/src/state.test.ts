@@ -46,4 +46,15 @@ describe("flight cards", () => {
     const s = run([{ type: "user", text: "q" }, ev({ type: "flight_cards", cards: [card] })]);
     expect(s.turns[0].cards?.[0].booking_token).toBe("tok");
   });
+
+  it("replaces a card shown twice instead of duplicating it", () => {
+    const card = (tok: string, label: string) => ({ booking_token: tok, label,
+      itinerary: { price: 1, total_duration_min: 80, stops: 0, airlines: ["IndiGo"], segments: [] },
+      search: { origin: "HYD", destination: "MAA", date: "2026-10-17" }, currency: "INR", links_valid_minutes: 30 });
+    const s = run([{ type: "user", text: "q" },
+      ev({ type: "flight_cards", cards: [card("a", "Cheapest"), card("b", "Best timing")] }),
+      ev({ type: "flight_cards", cards: [card("a", "Recommended"), card("c", "Flexible")] })]);
+    expect(s.turns[0].cards?.map((c) => [c.booking_token, c.label])).toEqual(
+      [["a", "Recommended"], ["b", "Best timing"], ["c", "Flexible"]]);
+  });
 });

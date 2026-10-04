@@ -13,8 +13,10 @@ CLI). It reaches `travel-mcp` over MCP stdio and has no other tools.
    agent itself, since the search can't exclude them.
 4. A 2–3 option shortlist: the cheapest, the best timing, and the most flexible.
 5. `search_policies` for the shortlisted airlines. For cancellation, refund or change questions a
-   **separate `airlines=["DGCA"]` call is required**. The agent assumes the lowest fare type (Saver/Value)
-   and says so, quotes fees only from passages, cites the source and date, and passes on stale
+   **separate `airlines=["DGCA"]` call is required**. Google Flights doesn't say which fare type a price
+   is, so the agent doesn't name one: it says the price is the basic fare and that the airline's page
+   shows the exact fare type and whether a checked bag is included (a real run showed IndiGo's
+   lowest as "Lite", no checked bag, below Google's price). It quotes fees only from passages, cites the source and date, and passes on stale
    warnings.
 6. A recommendation, a small table, and a "Fare rules" section with citations. Prices are copied
    exactly. Any difference quoted comes with both of the prices it's based on.

@@ -14,15 +14,20 @@ function Expiry({ minutesLeft, fetchedAt, what }: { minutesLeft: number | null; 
   );
 }
 
+const SHOWN = 5;
+
 function Options({ data, onRefresh, loading }: { data: BookingOptions; onRefresh: () => void; loading: boolean }) {
   const left = useMinutesLeft(data.fetched_at, data.links_valid_minutes);
   const expired = left != null && left < 0;
+  const [all, setAll] = useState(false);
+  const hidden = Math.max(data.options.length - SHOWN, 0);
+  const shown = all ? data.options : data.options.slice(0, SHOWN);
   return (
     <div className="mt-3 space-y-2 border-t border-stone-200 pt-3 dark:border-stone-800">
       {data.notes.map((n) => (
         <p key={n} className="text-xs text-amber-700 dark:text-amber-400">{n}</p>
       ))}
-      {data.options.map((o, i) => (
+      {shown.map((o, i) => (
         <div key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-stone-50 px-3 py-2 text-sm dark:bg-stone-800/60">
           <span className="font-medium">{o.seller}</span>
           {o.is_airline && (
@@ -45,6 +50,11 @@ function Options({ data, onRefresh, loading }: { data: BookingOptions; onRefresh
           {o.features.length > 0 && <span className="w-full text-xs text-stone-500">{o.features.join(" · ")}</span>}
         </div>
       ))}
+      {hidden > 0 && (
+        <button onClick={() => setAll(!all)} className="text-xs text-teal-800 underline hover:text-teal-900 dark:text-teal-300">
+          {all ? "Show fewer sellers" : `Show ${hidden} more seller${hidden === 1 ? "" : "s"}`}
+        </button>
+      )}
       <div className="flex items-center justify-between text-xs text-stone-500">
         <Expiry minutesLeft={left} fetchedAt={data.fetched_at} what="These links are" />
         {expired && (
