@@ -24,6 +24,7 @@ and 0 for re-runs that day.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `Failed to refresh OAuth token` | Another Claude Code or Desktop process renewing the shared login | It's retried automatically. Otherwise wait a minute or close other Claude Code windows |
+| `OAuth session expired and could not be refreshed` | The stored Claude Code login itself expired (not a race) | Run `claude` in a terminal, type `/login`, then retry. Or set `ANTHROPIC_API_KEY` |
 | `uv sync` fails with a locked `.exe` | Claude Desktop is running `travel-mcp` | Quit Claude Desktop from the tray, sync, then reopen |
 | `ingest` timeouts on IndiGo/Air India | The site blocks non-browser clients | Use the manual saves (already configured) |
 | `looks like a block or consent page` | The saved page was a cookie wall or bot check | Accept cookies in the browser and save again |

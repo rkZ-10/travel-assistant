@@ -154,3 +154,21 @@ def test_friendly_validation_errors():
            "  Value error, home_airport must be a 3-letter IATA code, got 'HYDERABAD' [type=value_error, input_value='x']")
     assert friendly_error(raw, "update_travel_preferences") == "home_airport must be a 3-letter IATA code, got 'HYDERABAD'"
     assert friendly_error("Error executing tool x: boom", "x") == "boom"
+
+
+def test_expired_login_shows_sign_in_steps(tmp_path):
+    err = "api_error: Failed to authenticate: OAuth session expired and could not be refreshed"
+    with client(tmp_path, error=err) as c, c.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        ws.send_json({"type": "message", "text": "hi"})
+        msgs = [ws.receive_json() for _ in range(4)]
+        assert msgs[-1]["type"] == "error" and "/login" in msgs[-1]["message"]
+
+
+def test_login_expired_vs_transient():
+    from travel_agent.runner import is_login_expired, is_transient_auth_error
+
+    expired = RunTrace(prompt="p", model="m", error="api_error: Failed to authenticate: OAuth session expired and could not be refreshed")
+    race = RunTrace(prompt="p", model="m", error="completed: Failed to refresh OAuth token: another Claude Code process is refreshing it")
+    assert is_login_expired(expired) and not is_transient_auth_error(expired)
+    assert is_transient_auth_error(race) and not is_login_expired(race)

@@ -32,7 +32,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import REPO_ROOT, AgentConfig
 from .guard import deny_all
 from .mcp_bridge import BridgeError, McpBridge
-from .runner import TravelAgent, is_transient_auth_error
+from .runner import LOGIN_HINT, TravelAgent, is_login_expired, is_transient_auth_error
 
 UI_DIST = REPO_ROOT / "ui" / "dist"
 DEV_ORIGINS = {"http://localhost:5173", "http://127.0.0.1:5173"}  # Vite dev server
@@ -88,11 +88,16 @@ class Session:
             agent = await self._ensure_agent()
             trace = await agent.ask(str(msg["text"]).strip())
             if trace.error:
-                hint = (" Another Claude window was refreshing the shared login; try again in a minute."
-                        if is_transient_auth_error(trace) else "")
-                await self.send({"type": "error", "message": f"{trace.error}{hint}"})
-                if is_transient_auth_error(trace):
-                    await self.close()  # fresh session next time
+                if is_login_expired(trace):
+                    message = LOGIN_HINT
+                elif is_transient_auth_error(trace):
+                    message = (f"{trace.error} Another Claude window was refreshing the shared login; "
+                               "try again in a minute.")
+                else:
+                    message = trace.error
+                await self.send({"type": "error", "message": message})
+                if is_transient_auth_error(trace) or is_login_expired(trace):
+                    await self.close()  # fresh session (and fresh credentials) next time
             else:
                 await self.send({
                     "type": "answer", "text": trace.answer, "turns": trace.turns,

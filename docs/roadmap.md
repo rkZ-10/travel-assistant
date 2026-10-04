@@ -11,9 +11,10 @@
 - **Fare type is assumed:** Google Flights doesn't say Saver vs Flexi. The agent states this assumption.
 
 ## Next
-0. ~~Preferences panel; flight cards with booking redirect and expiry~~ (done 2026-10-04). Next: run
-   `scripts/probe_booking.py` to confirm airline-direct sellers on Indian routes, then use booking-option
-   fare types in answers (replace the Saver assumption).
+0. ~~Preferences panel; flight cards with booking redirect and expiry~~ (done 2026-10-04). The first probe (HYD→MAA, 2026-10-04) found Air India
+   Express **airline-direct with a redirect link**, but no fare name or price in that option. Next:
+   record a real fixture (`probe_booking.py --record`) to check the price fields, then use
+   booking-option fare types in answers.
 1. ~~Baseline eval run~~ (done 2026-10-03: sonnet 17/17). ~~Fixes for the haiku misses and
    max_price~~ (done; sonnet 18/18). Next: booking via the sandbox provider.
 2. ~~Booking via a sandbox provider~~: replaced by redirecting to the seller (decision 13).

@@ -114,6 +114,18 @@ def is_transient_auth_error(trace: RunTrace) -> bool:
     return bool(trace.error) and "refresh oauth token" in trace.error.lower()
 
 
+LOGIN_HINT = (
+    "Your Claude login has expired. Sign in again: open a terminal, run `claude`, type /login and "
+    "follow the browser prompt. Then retry. (Or set ANTHROPIC_API_KEY in .env to use an API key.)"
+)
+
+
+def is_login_expired(trace: RunTrace) -> bool:
+    """Not a race: the stored Claude Code login itself has expired and needs a fresh /login."""
+    e = (trace.error or "").lower()
+    return "oauth" in e and ("expired" in e or "could not be refreshed" in e) and not is_transient_auth_error(trace)
+
+
 async def ask_once(
     prompt: str,
     cfg: AgentConfig,

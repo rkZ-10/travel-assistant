@@ -9,7 +9,7 @@ from typing import Any
 
 from .config import AgentConfig
 from .guard import deny_all
-from .runner import ask_once, open_agent
+from .runner import LOGIN_HINT, ask_once, is_login_expired, open_agent
 from .trace import RunTrace
 
 
@@ -52,7 +52,9 @@ async def _ask(args: argparse.Namespace) -> int:
     if trace.answer:
         print(trace.answer)
     print(_summary(trace, args.verbose))
-    if trace.error and "oauth" in trace.error.lower():
+    if is_login_expired(trace):
+        print("  " + LOGIN_HINT)
+    elif trace.error and "oauth" in trace.error.lower():
         print("  hint: another Claude Code/Desktop process kept refreshing the shared login (retried "
               "automatically). Try again in a minute, or close other Claude Code windows.")
     return 1 if trace.error else 0
