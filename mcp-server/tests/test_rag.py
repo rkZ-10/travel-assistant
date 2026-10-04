@@ -292,3 +292,11 @@ def test_staleness_warning_after_60_days():
     assert "74 days" in staleness_warning(manual, old, now)
     assert "re-save https://a.test/p as rag/manual/m.html" in staleness_warning(manual, old, now)
     assert "--refresh" in staleness_warning(fetched, old, now)
+
+
+def test_page_wrapped_in_one_form_keeps_its_content():
+    body = "<p>" + "Cancellation fee before 96 hours of departure: 3999. " * 60 + "</p>"
+    html = (f"<html><body><form id='aspnetForm'><input type='hidden' value='x'>{body}"
+            "<form><label>Search</label><input></form></form></body></html>")
+    md, _ = html_to_markdown(html)
+    assert "3999" in md and "Search" not in md

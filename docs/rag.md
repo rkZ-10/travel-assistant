@@ -40,6 +40,9 @@ sources.yaml → ingest (fetch or read file) → extract → check → snapshot 
      rather than headings, so without this every table inherited an unrelated heading.
    - Duplicate blocks are removed only within the same section, so identical tables under
      different tabs both survive.
+   - Forms are dropped as booking/search widgets, except a form holding most of the page:
+     ASP.NET sites such as SpiceJet wrap the whole page in one `<form>`, which used to extract
+     to nothing.
    - `EXTRACTOR_VERSION` makes `ingest` re-extract existing snapshots when the extractor changes,
      without re-fetching and keeping the original capture date.
 3. **Check** (`check_content`) rejects JS shells, bot walls, CDN challenges and consent screens. It

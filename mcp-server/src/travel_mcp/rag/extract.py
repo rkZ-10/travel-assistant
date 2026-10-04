@@ -9,9 +9,13 @@ import re
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 # Bump when extraction output changes: `ingest` then re-extracts saved snapshots without re-fetching.
-EXTRACTOR_VERSION = 2
+EXTRACTOR_VERSION = 3
 
-_DROP = ["script", "style", "noscript", "svg", "iframe", "form", "button", "nav", "footer", "header"]
+_DROP = ["script", "style", "noscript", "svg", "iframe", "button", "nav", "footer", "header",
+         "input", "select", "textarea"]
+# ASP.NET (e.g. SpiceJet) wraps the whole page in one <form>. A form with this much text is the
+# page, so keep its content; smaller forms are search/booking widgets and are dropped.
+_PAGE_FORM_CHARS = 2000
 _BLOCK = {"p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "table", "dt", "dd", "blockquote"}
 _WS = re.compile(r"[ \t\r\f\v ]+")
 
@@ -79,6 +83,11 @@ def html_to_markdown(html: str) -> tuple[str, str | None]:
     _tab_labels(soup)
     for tag in soup(_DROP):
         tag.decompose()
+    for form in soup.find_all("form"):
+        if len(form.get_text(" ", strip=True)) >= _PAGE_FORM_CHARS:
+            form.unwrap()
+        else:
+            form.decompose()
     # Cookie banners / modals. Inactive tab panels are often aria-hidden; keep those.
     for tag in soup.select('[class*="cookie"], [id*="cookie"], [aria-hidden="true"]'):
         if not tag.get("data-rag-heading"):
