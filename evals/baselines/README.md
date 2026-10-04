@@ -51,3 +51,14 @@ Each fix has a test. Re-scored from saved traces: **15/18.**
 15/18 with different failures), so a single haiku attempt is noise. Use `--repeat 3` if you need a
 real haiku number. No more prompt changes were made after sonnet reached 18/18, to keep this
 baseline clean.
+
+## 2026-10-04: regression found in the web UI
+
+A real web run called IndiGo UpFront (the priciest fare type) "the cheapest fare type" and quoted
+its ₹999 cancellation fee, also on a flight card. New case `policy-basic-fare-row` reproduces it.
+
+- First attempt after a prompt fix: **fail**. The agent searched for "basic fare", got only
+  UpFront/Stretch+ tables, and correctly refused to use them, but gave no figure.
+- After telling it to name the fare type in the query (IndiGo "Saver", Air India "Basic"/"Value"):
+  **3/3 pass** with sonnet (`--repeat 3`). It quotes ₹4,299 "if booked as Saver" and says the
+  Lite fare has no fee table in the sources.
