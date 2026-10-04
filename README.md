@@ -8,7 +8,7 @@ suite. It's built with **MCP**, **RAG**, the **Claude Agent SDK** and determinis
 
 ## See it in action
 
-A real run in the web UI: "Cheapest non-stop flight to Chennai on Oct 14", with saved preferences
+A real run in the web UI: "Cheapest flight to Chennai on Oct 15", with saved preferences
 (home HYD, nonstop, 05:00–10:00, prefers IndiGo).
 
 **1. Preferences: pick airports and airlines by name; every search uses them**
@@ -19,9 +19,9 @@ A real run in the web UI: "Cheapest non-stop flight to Chennai on Oct 14", with 
 
 ![Chat answer](docs/images/chat-answer.png)
 
-The ✗ step is the grounding check at work: the model garbled a booking token, the backend refused
-to show a card for a flight that wasn't in the search results, and the model retried. Cards are now
-keyed by flight number, which is harder to garble.
+The "Claude login" badge shows what the agent runs on: your Claude login when one is found on
+your computer, otherwise an Anthropic API key you enter ([details](docs/ui.md#claude-access-login-or-api-key)).
+Fees are quoted for the basic fare type ("if booked as Saver"), never a pricier one.
 
 **3. Flight cards filled from the real search result, with fare expiry**
 
